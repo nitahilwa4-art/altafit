@@ -1,0 +1,82 @@
+# AI Integration Guide: Calorie & Macro Parser
+
+## 1. System Prompt (Untuk LLM/Gemini)
+Gunakan prompt ini sebagai instruksi dasar (system instruction) untuk AI agar outputnya selalu konsisten dalam format JSON.
+
+```text
+You are a highly accurate Nutritional AI Assistant for the 'Vitality' app. 
+Your task is to parse user messages (text descriptions of meals or food photos) into structured nutritional data.
+
+### Constraints:
+1. Always respond in valid JSON format only.
+2. If the user's input is ambiguous, make a reasonable estimate based on standard portion sizes.
+3. If the input is not food-related, return an error object.
+
+### JSON Output Schema:
+{
+  "food_item": "String (e.g., 'Bowl of oatmeal with blueberries')",
+  "calories": Integer,
+  "protein_g": Integer,
+  "carbs_g": Integer,
+  "fat_g": Integer,
+  "confidence_score": Float (0.0 to 1.0),
+  "is_food": Boolean
+}
+```
+
+---
+
+## 2. Contoh Request & Response
+
+**User Input:** "I had 2 slices of whole wheat toast with half an avocado and a fried egg."
+
+**AI Output (JSON):**
+```json
+{
+  "food_item": "Whole wheat toast with avocado and fried egg",
+  "calories": 420,
+  "protein_g": 18,
+  "carbs_g": 32,
+  "fat_g": 24,
+  "confidence_score": 0.95,
+  "is_food": true
+}
+```
+
+---
+
+## 3. Implementasi di Laravel (Controller)
+
+Di `MealLogController.php`, Anda bisa menggunakan HTTP client untuk memanggil API Gemini/OpenAI:
+
+```php
+public function storeAI(Request $request) 
+{
+    $input = $request->input('message'); // atau file image
+    
+    // Panggil AI Service
+    $aiResponse = Http::withToken(config('services.gemini.key'))
+        ->post('https://generativelanguage.googleapis.com/...', [
+            'contents' => [
+                ['parts' => [['text' => $systemPrompt . "\nUser: " . $input]]]
+            ]
+        ])->json();
+
+    $nutritionData = json_decode($aiResponse['candidates'][0]['content']['parts'][0]['text'], true);
+
+    if ($nutritionData['is_food']) {
+        $meal = Meal::create([
+            'user_id' => auth()->id(),
+            'description' => $nutritionData['food_item'],
+            'calories' => $nutritionData['calories'],
+            'protein_g' => $nutritionData['protein_g'],
+            'carbs_g' => $nutritionData['carbs_g'],
+            'fat_g' => $nutritionData['fat_g'],
+        ]);
+
+        return inertia('Dashboard', ['newMeal' => $meal]);
+    }
+
+    return back()->withErrors(['message' => 'Could not recognize any food items.']);
+}
+```

@@ -1,0 +1,92 @@
+# Technical Implementation Guide: Vitality Health Tracker
+
+## Tech Stack Overview
+- **Backend:** Laravel 11
+- **Frontend:** React with Inertia.js
+- **Database:** MySQL
+- **Styling:** Tailwind CSS (to match the "Verdant Vitality" design system)
+
+---
+
+## 1. Database Schema (MySQL)
+
+### `users` table
+- `id` (Primary Key)
+- `name`
+- `email`
+- `password`
+- `profile_photo_path`
+- `current_weight` (decimal)
+- `daily_calorie_goal` (integer)
+- `protein_goal_g` (integer)
+- `carbs_goal_g` (integer)
+- `fat_goal_g` (integer)
+- `reminders_enabled` (boolean)
+
+### `meals` table
+- `id` (Primary Key)
+- `user_id` (Foreign Key)
+- `description` (string) - *e.g., "Bowl of oatmeal"*
+- `image_path` (string, nullable)
+- `calories` (integer)
+- `protein_g` (integer)
+- `carbs_g` (integer)
+- `fat_g` (integer)
+- `created_at` (timestamp)
+
+### `water_logs` table
+- `id` (Primary Key)
+- `user_id` (Foreign Key)
+- `amount_ml` (integer)
+- `created_at` (timestamp)
+
+---
+
+## 2. API & Inertia Routes
+
+### Dashboard (`GET /dashboard`)
+- **Controller:** `DashboardController@index`
+- **Data Sent to React:**
+    - Current day's totals (calories, macros).
+    - Last 7 days of calorie/weight data for the charts.
+    - Water intake progress for the current day.
+
+### Chat & Logging (`POST /logs/store-ai`)
+- **Controller:** `MealLogController@store`
+- **Logic:** 
+    - Accept text or image.
+    - (Integration Point) Send data to an AI service (like Gemini or OpenAI) to parse nutritional info.
+    - Save the resulting breakdown to the `meals` table.
+    - Return the updated daily totals to the frontend via Inertia.
+
+### Profile (`GET /profile`, `PUT /profile`)
+- **Controller:** `ProfileController@edit` / `update`
+- **Data:** Handle user goals and settings.
+
+---
+
+## 3. Frontend Component Structure (React)
+
+### Layouts
+- `AuthenticatedLayout.jsx`: Includes the `TopAppBar` and `BottomNavBar` shared components.
+
+### Pages
+- `Dashboard.jsx`: 
+    - `CalorieRing.jsx` (Circular progress)
+    - `MacroCards.jsx` (Interactive cards)
+    - `DetailedChart.jsx` (Recharts or Chart.js for the trend line)
+    - `WaterTracker.jsx`
+- `Chat.jsx`:
+    - `MessageList.jsx`
+    - `MessageInput.jsx` (With file upload for images)
+- `Profile.jsx`:
+    - `GoalForm.jsx` (Settings and inputs)
+
+---
+
+## 4. Design System Integration
+Use the **Verdant Vitality** theme tokens:
+- **Primary Green:** `#4ADE80` (Tailwind: `green-400`)
+- **Dark Green:** `#006a34`
+- **Font:** Inter (Import via Google Fonts)
+- **Radius:** `rounded-lg` (8px) for cards and inputs.

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#afacac",
+                        "primary": "#006a34",
+                        "on-primary-fixed": "#004a22",
+                        "surface": "#f9f6f5",
+                        "secondary-dim": "#005c3c",
+                        "surface-container-high": "#e5e2e1",
+                        "tertiary-dim": "#005867",
+                        "surface-container": "#eae7e7",
+                        "surface-bright": "#f9f6f5",
+                        "on-surface-variant": "#5c5b5b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#00333d",
+                        "tertiary-container": "#00dcfe",
+                        "error-dim": "#9f0519",
+                        "on-primary-fixed-variant": "#006a34",
+                        "on-tertiary": "#ddf7ff",
+                        "surface-tint": "#006a34",
+                        "tertiary-fixed-dim": "#00cded",
+                        "secondary-container": "#73fbbc",
+                        "tertiary": "#006575",
+                        "on-primary-container": "#005f2e",
+                        "on-secondary-container": "#005e3e",
+                        "surface-container-low": "#f3f0ef",
+                        "on-error-container": "#570008",
+                        "on-tertiary-container": "#004956",
+                        "error": "#b31b25",
+                        "surface-container-highest": "#dfdcdc",
+                        "on-surface": "#2f2e2e",
+                        "error-container": "#fb5151",
+                        "primary-container": "#6dfe9c",
+                        "on-secondary-fixed-variant": "#006946",
+                        "inverse-surface": "#0e0e0e",
+                        "secondary-fixed-dim": "#64ecaf",
+                        "surface-dim": "#d6d4d3",
+                        "on-primary": "#cdffd4",
+                        "inverse-primary": "#6dfe9c",
+                        "primary-fixed": "#6dfe9c",
+                        "inverse-on-surface": "#9e9c9c",
+                        "on-error": "#ffefee",
+                        "on-background": "#2f2e2e",
+                        "tertiary-fixed": "#00dcfe",
+                        "primary-dim": "#005c2c",
+                        "on-tertiary-fixed-variant": "#005361",
+                        "outline": "#787676",
+                        "secondary": "#006946",
+                        "on-secondary-fixed": "#00492f",
+                        "surface-variant": "#dfdcdc",
+                        "secondary-fixed": "#73fbbc",
+                        "primary-fixed-dim": "#5def8f",
+                        "on-secondary": "#c9ffdf",
+                        "background": "#f9f6f5"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow {
+            box-shadow: 0 32px 64px -12px rgba(47, 46, 46, 0.04);
+        }
+        .vitality-gradient {
+            background: linear-gradient(135deg, #006a34 0%, #6dfe9c 100%);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f6f5;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#f9f6f5] dark:bg-neutral-900 flex justify-between items-center w-full px-6 py-4 fixed top-0 z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#006a34] dark:text-[#4ADE80]">bolt</span>
+<h1 class="font-['Inter'] font-bold tracking-tight text-[#2f2e2e] dark:text-neutral-100">Profile &amp; Goals</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="portrait of a healthy young woman with a glowing complexion and natural smile, soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-fzqHafd0S-tdkQLvTdCnu9yM4tnV0yZucBMSTAeWU1ejO80puM-bUvVuVn-5576mk_3NJmzgRuUHSReywvgHpeatOVzp17fIZjEu9MBXCC24eYWo61zMyXEBXwkHVGT1xDJ2DeDfLIDRgGiSRhy_oX3sIP8t0_tq5FR7pIfRLbtIN_wYaBVw3I6QJktzaEZVSVadicSChJyHwMLES6c7Q5sFx9SQy6yUwdOki-u76PeXXLQk8Dkkb2LTy7SBcy1X0aZW_NKNQ2Y"/>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 mt-20 mb-28 px-6 space-y-10">
+<!-- Profile Header Section -->
+<section class="flex flex-col items-center pt-4">
+<div class="relative">
+<div class="w-24 h-24 rounded-full vitality-gradient p-1">
+<div class="w-full h-full rounded-full bg-surface overflow-hidden border-4 border-surface">
+<img class="w-full h-full object-cover" data-alt="close-up portrait of user for profile settings, minimalist high-end wellness aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpT1qmTKmjv7rrFqyReTRMVVeCqxlCWyBcgGeM5bAAotYWFnNxHIub-Jhog-Bpc36vAi2m8Q0blxQBvjNs5CLyUnV8IoaEbs4g7wLydVD0b18pT1zQrBaFgSnxkyn432OSRr13CpjUn1GzBWjigr2kC1dhG3MJGBLkP7QqCOZwleRQYd9bLNTZuQ7I78X41qPi6R87RUuht-niIQ6Jg5a6uTbO3G-hDAb6Icj5s9UteFtFmQ5kOnujstRzLT_QlInqPOWFmjpQHic"/>
+</div>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary text-on-primary p-1.5 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</div>
+<div class="text-center mt-5">
+<h2 class="text-2xl font-black tracking-tight text-on-surface italic">Elena Vance</h2>
+<div class="flex items-center justify-center gap-2 mt-1">
+<span class="text-on-surface-variant font-medium text-sm">64.2 kg</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant/30"></span>
+<span class="text-on-surface-variant font-medium text-sm">Goal: 62.0 kg</span>
+</div>
+</div>
+</section>
+<!-- Goals Bento Grid -->
+<section class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-5 rounded-xl editorial-shadow">
+<span class="material-symbols-outlined text-primary mb-3">local_fire_department</span>
+<p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant opacity-70">Daily Target</p>
+<p class="text-xl font-black text-on-surface mt-1">2,400 <span class="text-xs font-normal">kcal</span></p>
+</div>
+<div class="bg-surface-container-low p-5 rounded-xl editorial-shadow">
+<span class="material-symbols-outlined text-primary mb-3">water_drop</span>
+<p class="text-[10px] uppercase tracking-wider font-bold text-on-surface-variant opacity-70">Hydration</p>
+<p class="text-xl font-black text-on-surface mt-1">2.5 <span class="text-xs font-normal">Liters</span></p>
+</div>
+</section>
+<!-- Settings List -->
+<section class="space-y-2">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant mb-4 px-2">System Settings</h3>
+<div class="bg-surface-container-low rounded-xl overflow-hidden">
+<!-- Reminder Toggle -->
+<div class="flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">notifications_active</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Smart Reminders</p>
+<p class="text-xs text-on-surface-variant">Meal and water alerts</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:vitality-gradient"></div>
+</label>
+</div>
+<!-- Goal Sync -->
+<div class="flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">sync</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Apple Health Sync</p>
+<p class="text-xs text-on-surface-variant">Last synced 2m ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<!-- Unit Preference -->
+<div class="flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">straighten</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Units &amp; Measurements</p>
+<p class="text-xs text-on-surface-variant">Metric (kg, ml)</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- CTA Button -->
+<section class="pb-6">
+<button class="w-full vitality-gradient text-white py-4 rounded-full font-bold text-sm tracking-wide shadow-xl active:scale-95 duration-150 flex items-center justify-center gap-2">
+<span>Save Changes</span>
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</button>
+<button class="w-full mt-4 text-error font-semibold text-xs py-2 uppercase tracking-widest opacity-80">Log Out</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#f9f6f5]/80 dark:bg-neutral-900/80 backdrop-blur-xl shadow-[0_-4px_32px_0_rgba(47,46,46,0.04)] rounded-t-[24px] border-t-[0.5px] border-[#afacac]/15">
+<div class="flex flex-col items-center justify-center text-[#5c5b5b] dark:text-neutral-400 px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-200 ease-out">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider font-['Inter'] mt-1">Log</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5c5b5b] dark:text-neutral-400 px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-200 ease-out">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider font-['Inter'] mt-1">Trends</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#5c5b5b] dark:text-neutral-400 px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-200 ease-out">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider font-['Inter'] mt-1">Plans</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#6dfe9c] dark:bg-[#006a34] text-[#006a34] dark:text-[#6dfe9c] rounded-full px-4 py-1 hover:opacity-80 transition-opacity active:scale-90 duration-200 ease-out">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider font-['Inter'] mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Support;
+
+class NutritionEstimator
+{
+    public static function estimate(string $message): array
+    {
+        $normalized = mb_strtolower(trim($message));
+
+        $presets = [
+            'taco' => ['calories' => 180, 'protein' => 9, 'carbs' => 14, 'fat' => 9, 'fiber' => 2],
+            'guacamole' => ['calories' => 120, 'protein' => 2, 'carbs' => 8, 'fat' => 10, 'fiber' => 5],
+            'salad' => ['calories' => 160, 'protein' => 6, 'carbs' => 12, 'fat' => 9, 'fiber' => 4],
+            'rice' => ['calories' => 205, 'protein' => 4, 'carbs' => 45, 'fat' => 0, 'fiber' => 1],
+            'egg' => ['calories' => 78, 'protein' => 6, 'carbs' => 1, 'fat' => 5, 'fiber' => 0],
+            'oatmeal' => ['calories' => 150, 'protein' => 5, 'carbs' => 27, 'fat' => 3, 'fiber' => 4],
+            'chicken' => ['calories' => 220, 'protein' => 32, 'carbs' => 0, 'fat' => 8, 'fiber' => 0],
+            'salmon' => ['calories' => 280, 'protein' => 29, 'carbs' => 0, 'fat' => 18, 'fiber' => 0],
+            'quinoa' => ['calories' => 180, 'protein' => 7, 'carbs' => 32, 'fat' => 3, 'fiber' => 5],
+            'avocado' => ['calories' => 160, 'protein' => 2, 'carbs' => 9, 'fat' => 15, 'fiber' => 7],
+            'bread' => ['calories' => 80, 'protein' => 3, 'carbs' => 15, 'fat' => 1, 'fiber' => 2],
+            'toast' => ['calories' => 80, 'protein' => 3, 'carbs' => 15, 'fat' => 1, 'fiber' => 2],
+            'burger' => ['calories' => 520, 'protein' => 26, 'carbs' => 40, 'fat' => 28, 'fiber' => 2],
+            'pizza' => ['calories' => 285, 'protein' => 12, 'carbs' => 36, 'fat' => 10, 'fiber' => 2],
+            'coffee' => ['calories' => 5, 'protein' => 0, 'carbs' => 1, 'fat' => 0, 'fiber' => 0],
+            'banana' => ['calories' => 105, 'protein' => 1, 'carbs' => 27, 'fat' => 0, 'fiber' => 3],
+            'apple' => ['calories' => 95, 'protein' => 0, 'carbs' => 25, 'fat' => 0, 'fiber' => 4],
+            'milk' => ['calories' => 103, 'protein' => 8, 'carbs' => 12, 'fat' => 2, 'fiber' => 0],
+            'yogurt' => ['calories' => 120, 'protein' => 10, 'carbs' => 14, 'fat' => 3, 'fiber' => 0],
+            'noodle' => ['calories' => 220, 'protein' => 7, 'carbs' => 40, 'fat' => 4, 'fiber' => 2],
+            'mie' => ['calories' => 220, 'protein' => 7, 'carbs' => 40, 'fat' => 4, 'fiber' => 2],
+            'tempe' => ['calories' => 193, 'protein' => 19, 'carbs' => 9, 'fat' => 11, 'fiber' => 2],
+            'tofu' => ['calories' => 144, 'protein' => 17, 'carbs' => 3, 'fat' => 9, 'fiber' => 1],
+        ];
+
+        $segments = preg_split('/\s*(?:\+|,| dan | with | & )\s*/u', $normalized) ?: [$normalized];
+
+        $totals = [
+            'calories' => 0,
+            'protein_g' => 0,
+            'carbs_g' => 0,
+            'fat_g' => 0,
+            'fiber_g' => 0,
+        ];
+        $matchedKeywords = [];
+
+        foreach ($segments as $segment) {
+            $segmentMultiplier = self::extractMultiplier($segment);
+
+            foreach ($presets as $keyword => $values) {
+                if (! str_contains($segment, $keyword)) {
+                    continue;
+                }
+
+                $matchedKeywords[] = $keyword;
+                $totals['calories'] += $values['calories'] * $segmentMultiplier;
+                $totals['protein_g'] += $values['protein'] * $segmentMultiplier;
+                $totals['carbs_g'] += $values['carbs'] * $segmentMultiplier;
+                $totals['fat_g'] += $values['fat'] * $segmentMultiplier;
+                $totals['fiber_g'] += $values['fiber'] * $segmentMultiplier;
+            }
+        }
+
+        if ($matchedKeywords === []) {
+            return [
+                'description' => self::headline($message),
+                'calories' => 320,
+                'protein_g' => 14,
+                'carbs_g' => 28,
+                'fat_g' => 12,
+                'fiber_g' => 4,
+                'confidence_score' => 0.45,
+                'note' => 'I made a broad estimate because the meal description is still quite general.',
+            ];
+        }
+
+        foreach ($totals as $key => $value) {
+            $totals[$key] = (int) round($value);
+        }
+
+        $uniqueMatches = count(array_unique($matchedKeywords));
+        $confidence = min(0.56 + ($uniqueMatches * 0.07), 0.94);
+        $note = $uniqueMatches > 1
+            ? 'Estimated from multiple food keywords in your message. You can fine-tune portions afterward if needed.'
+            : 'Estimated from keywords in your message. You can adjust quantities afterward if needed.';
+
+        return [
+            'description' => self::headline($message),
+            ...$totals,
+            'confidence_score' => $confidence,
+            'note' => $note,
+        ];
+    }
+
+    protected static function extractMultiplier(string $message): float
+    {
+        if (preg_match('/\b([2-9])(?:\s*([x×]))?\b/u', $message, $matches)) {
+            return (float) $matches[1];
+        }
+
+        if (str_contains($message, 'half') || str_contains($message, 'setengah')) {
+            return 0.5;
+        }
+
+        if (str_contains($message, 'double')) {
+            return 2.0;
+        }
+
+        return 1.0;
+    }
+
+    protected static function headline(string $message): string
+    {
+        $trimmed = trim($message);
+        return mb_convert_case($trimmed !== '' ? $trimmed : 'Meal entry', MB_CASE_TITLE, 'UTF-8');
+    }
+}
