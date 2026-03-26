@@ -7,7 +7,7 @@ function chartPath(points) {
     return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${(index / (points.length - 1)) * 100},${point}`).join(' ');
 }
 
-export default function Dashboard({ pageMeta, summary, chart, flash }) {
+export default function Dashboard({ pageMeta, summary, chart, hydrationHistory = [], flash }) {
     const progress = ((summary.consumedCalories / summary.calorieTarget) * 100).toFixed(0);
     const path = chartPath(chart.points);
 
@@ -77,6 +77,23 @@ export default function Dashboard({ pageMeta, summary, chart, flash }) {
                     <button type="button" className="icon-button icon-button--accent" onClick={() => router.post('/dashboard/hydration/add')}><Icon name="add" /></button>
                 </div>
             </section>
+
+            {hydrationHistory.length ? (
+                <section className="editorial-card hydration-history-card">
+                    <SectionHeading title="Hydration History" badge={`${hydrationHistory.length} logs`} />
+                    <div className="hydration-history-list">
+                        {hydrationHistory.map((log) => (
+                            <article key={log.id} className="hydration-history-list__item">
+                                <div>
+                                    <strong>{log.amount} ml</strong>
+                                    <p>Quick hydration entry</p>
+                                </div>
+                                <span>{log.time}</span>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+            ) : null}
         </AppShell>
     );
 }

@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import AppShell from '../Layouts/AppShell';
 import Icon from '../Components/ui/Icon';
 
@@ -59,9 +59,12 @@ export default function Chat({ pageMeta, chat, flash }) {
                                 <article key={meal.id} className="recent-meals-list__item">
                                     <div>
                                         <strong>{meal.description}</strong>
-                                        <p>Saved meal entry</p>
+                                        <p>Saved at {meal.time}</p>
                                     </div>
-                                    <span>{meal.calories} kcal</span>
+                                    <div className="recent-meals-list__actions">
+                                        <span>{meal.calories} kcal</span>
+                                        <button type="button" className="text-button text-button--danger" onClick={() => router.delete(`/chat/log/${meal.id}`, { preserveScroll: true })}>Delete</button>
+                                    </div>
                                 </article>
                             ))}
                         </div>

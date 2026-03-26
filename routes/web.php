@@ -13,6 +13,7 @@ Route::post('/dashboard/hydration/remove', [DashboardController::class, 'removeW
 
 Route::get('/chat', ChatController::class)->name('chat.index');
 Route::post('/chat/log', [ChatController::class, 'store'])->name('chat.store');
+Route::delete('/chat/log/{meal}', [ChatController::class, 'destroy'])->name('chat.destroy');
 
 Route::get('/plans', PlansController::class)->name('plans.index');
 

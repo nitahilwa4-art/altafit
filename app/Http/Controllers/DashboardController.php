@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\WaterLog;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,11 +13,38 @@ class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
-        $user = User::query()->with(['meals' => fn ($query) => $query->latest('logged_at'), 'waterLogs' => fn ($query) => $query->latest('logged_at')])->firstOrFail();
+        $user = User::query()->with([
+            'meals' => fn ($query) => $query->latest('logged_at'),
+            'waterLogs' => fn ($query) => $query->latest('logged_at'),
+        ])->firstOrFail();
 
         $consumedCalories = (int) $user->meals->sum('calories');
         $hydrationCurrent = round($user->waterLogs->sum('amount_ml') / 1000, 1);
         $remainingCalories = max($user->daily_calorie_goal - $consumedCalories, 0);
+
+        $weekDays = collect(range(6, 0))->map(function (int $offset) {
+            $date = Carbon::now()->subDays($offset);
+            return [
+                'date' => $date->toDateString(),
+                'label' => strtoupper($date->format('D')[0]),
+            ];
+        });
+
+        $caloriesByDay = $user->meals
+            ->groupBy(fn ($meal) => optional($meal->logged_at)->toDateString())
+            ->map(fn ($dayMeals) => (int) $dayMeals->sum('calories'));
+
+        $chartPoints = $weekDays->map(function (array $day) use ($caloriesByDay, $user) {
+            $value = (int) ($caloriesByDay[$day['date']] ?? 0);
+            $ratio = $user->daily_calorie_goal > 0 ? min($value / $user->daily_calorie_goal, 1) : 0;
+            return max(10, (int) round(100 - ($ratio * 90)));
+        })->values();
+
+        $hydrationHistory = $user->waterLogs->take(4)->map(fn ($log) => [
+            'id' => $log->id,
+            'amount' => $log->amount_ml,
+            'time' => optional($log->logged_at)->format('H:i') ?? optional($log->created_at)->format('H:i'),
+        ])->values();
 
         return Inertia::render('Dashboard', [
             'pageMeta' => [
@@ -37,9 +65,10 @@ class DashboardController extends Controller
                 'weeklyChange' => '-4% kcal',
             ],
             'chart' => [
-                'labels' => ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
-                'points' => [75, 85, 95, 60, 80, 40, 38],
+                'labels' => $weekDays->pluck('label')->all(),
+                'points' => $chartPoints->all(),
             ],
+            'hydrationHistory' => $hydrationHistory,
             'flash' => [
                 'success' => session('success'),
             ],

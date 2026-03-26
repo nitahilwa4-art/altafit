@@ -16,7 +16,7 @@ class ChatController extends Controller
     {
         $user = User::query()->with(['meals' => fn ($query) => $query->latest('logged_at')])->firstOrFail();
         $featuredMeal = $user->meals->first();
-        $recentMeals = $user->meals->take(3)->values();
+        $recentMeals = $user->meals->take(6)->values();
 
         return Inertia::render('Chat', [
             'pageMeta' => [
@@ -57,6 +57,7 @@ class ChatController extends Controller
                     'id' => $meal->id,
                     'description' => $meal->description,
                     'calories' => $meal->calories,
+                    'time' => optional($meal->logged_at)->format('H:i') ?? optional($meal->created_at)->format('H:i'),
                 ])->all(),
             ],
             'flash' => [
@@ -90,5 +91,12 @@ class ChatController extends Controller
         return redirect()->route('chat.index')
             ->with('success', 'Meal logged and analyzed from your text input.')
             ->with('analysis_note', $estimate['note']);
+    }
+
+    public function destroy(Meal $meal): RedirectResponse
+    {
+        $meal->delete();
+
+        return redirect()->route('chat.index')->with('success', 'Meal log removed.');
     }
 }
