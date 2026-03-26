@@ -53,10 +53,15 @@ class ChatController extends Controller
                 'chips' => ['Add to Daily Log', 'Adjust Quantities', 'View Recipes'],
                 'photoPrompt' => 'How about this dinner?',
                 'draft' => '',
+                'editingMeal' => session('editing_meal'),
                 'recentMeals' => $recentMeals->map(fn (Meal $meal) => [
                     'id' => $meal->id,
                     'description' => $meal->description,
                     'calories' => $meal->calories,
+                    'protein' => $meal->protein_g,
+                    'carbs' => $meal->carbs_g,
+                    'fat' => $meal->fat_g,
+                    'fiber' => $meal->fiber_g,
                     'time' => optional($meal->logged_at)->format('H:i') ?? optional($meal->created_at)->format('H:i'),
                 ])->all(),
             ],
@@ -91,6 +96,24 @@ class ChatController extends Controller
         return redirect()->route('chat.index')
             ->with('success', 'Meal logged and analyzed from your text input.')
             ->with('analysis_note', $estimate['note']);
+    }
+
+    public function update(Request $request, Meal $meal): RedirectResponse
+    {
+        $validated = $request->validate([
+            'description' => ['required', 'string', 'max:255'],
+            'calories' => ['required', 'integer', 'min:0'],
+            'protein_g' => ['required', 'integer', 'min:0'],
+            'carbs_g' => ['required', 'integer', 'min:0'],
+            'fat_g' => ['required', 'integer', 'min:0'],
+            'fiber_g' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $meal->update($validated);
+
+        return redirect()->route('chat.index')
+            ->with('success', 'Meal log updated.')
+            ->with('editing_meal', $meal->id);
     }
 
     public function destroy(Meal $meal): RedirectResponse

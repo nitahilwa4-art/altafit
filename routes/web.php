@@ -10,9 +10,11 @@ Route::get('/', DashboardController::class)->name('dashboard');
 Route::get('/dashboard', DashboardController::class)->name('dashboard.index');
 Route::post('/dashboard/hydration/add', [DashboardController::class, 'addWater'])->name('dashboard.hydration.add');
 Route::post('/dashboard/hydration/remove', [DashboardController::class, 'removeWater'])->name('dashboard.hydration.remove');
+Route::delete('/dashboard/hydration/{waterLog}', [DashboardController::class, 'destroyWater'])->name('dashboard.hydration.destroy');
 
 Route::get('/chat', ChatController::class)->name('chat.index');
 Route::post('/chat/log', [ChatController::class, 'store'])->name('chat.store');
+Route::patch('/chat/log/{meal}', [ChatController::class, 'update'])->name('chat.update');
 Route::delete('/chat/log/{meal}', [ChatController::class, 'destroy'])->name('chat.destroy');
 
 Route::get('/plans', PlansController::class)->name('plans.index');

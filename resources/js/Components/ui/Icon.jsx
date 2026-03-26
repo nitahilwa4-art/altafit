@@ -1,9 +1,9 @@
 const icons = {
     bolt: '⚡',
-    add_circle: '+',
+    add_circle: '⊕',
     insights: '◔',
     description: '▤',
-    person: '◡',
+    person: '◉',
     water_drop: '💧',
     trending_down: '↘',
     menu: '☰',
@@ -14,7 +14,7 @@ const icons = {
     check_circle: '✓',
     lightbulb: '✦',
     local_fire_department: '🔥',
-    notifications_active: '🔔',
+    notifications_active: '◔',
     sync: '↻',
     straighten: '↔',
     chevron_right: '›',
@@ -23,6 +23,7 @@ const icons = {
     add: '+',
     photo_camera: '⌁',
     arrow_upward: '↑',
+    radio_button_unchecked: '○',
 };
 
 export default function Icon({ name, className = '' }) {

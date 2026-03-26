@@ -40,7 +40,7 @@ class DashboardController extends Controller
             return max(10, (int) round(100 - ($ratio * 90)));
         })->values();
 
-        $hydrationHistory = $user->waterLogs->take(4)->map(fn ($log) => [
+        $hydrationHistory = $user->waterLogs->take(6)->map(fn ($log) => [
             'id' => $log->id,
             'amount' => $log->amount_ml,
             'time' => optional($log->logged_at)->format('H:i') ?? optional($log->created_at)->format('H:i'),
@@ -98,5 +98,12 @@ class DashboardController extends Controller
         }
 
         return redirect()->route('dashboard.index')->with('success', 'Latest hydration entry removed.');
+    }
+
+    public function destroyWater(WaterLog $waterLog): RedirectResponse
+    {
+        $waterLog->delete();
+
+        return redirect()->route('dashboard.index')->with('success', 'Hydration history item removed.');
     }
 }
