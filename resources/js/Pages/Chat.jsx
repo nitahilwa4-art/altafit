@@ -3,12 +3,19 @@ import { useEffect, useState } from 'react';
 import AppShell from '../Layouts/AppShell';
 import Icon from '../Components/ui/Icon';
 
+function FieldError({ message }) {
+    if (!message) return null;
+    return <small className="field-error">{message}</small>;
+}
+
 export default function Chat({ pageMeta, chat, flash }) {
-    const form = useForm({ message: chat.draft ?? '' });
+    const form = useForm({ message: chat.draft ?? '', meal_type: chat.mealTypes?.[1] ?? 'Lunch', notes: '' });
     const [selectedMealId, setSelectedMealId] = useState(chat.editingMeal ?? chat.recentMeals?.[0]?.id ?? null);
     const editingMeal = chat.recentMeals?.find((meal) => meal.id === selectedMealId) ?? null;
     const editForm = useForm({
         description: editingMeal?.description ?? '',
+        meal_type: editingMeal?.meal_type ?? 'Meal',
+        notes: editingMeal?.notes ?? '',
         calories: editingMeal?.calories ?? 0,
         protein_g: editingMeal?.protein ?? 0,
         carbs_g: editingMeal?.carbs ?? 0,
@@ -18,8 +25,11 @@ export default function Chat({ pageMeta, chat, flash }) {
 
     useEffect(() => {
         if (!editingMeal) return;
+        editForm.clearErrors();
         editForm.setData({
             description: editingMeal.description,
+            meal_type: editingMeal.meal_type,
+            notes: editingMeal.notes ?? '',
             calories: editingMeal.calories,
             protein_g: editingMeal.protein,
             carbs_g: editingMeal.carbs,
@@ -30,7 +40,7 @@ export default function Chat({ pageMeta, chat, flash }) {
 
     const submit = (event) => {
         event.preventDefault();
-        form.post('/chat/log', { preserveScroll: true, onSuccess: () => form.reset() });
+        form.post('/chat/log', { preserveScroll: true, onSuccess: () => form.reset('message', 'notes') });
     };
 
     const submitEdit = (event) => {
@@ -40,7 +50,7 @@ export default function Chat({ pageMeta, chat, flash }) {
     };
 
     return (
-        <AppShell pageMeta={pageMeta} topBarTitle="2,400 kcal" chatMode>
+        <AppShell pageMeta={pageMeta} topBarTitle={`${pageMeta.calorieTarget?.toLocaleString?.() ?? pageMeta.calorieTarget} kcal target`} chatMode>
             <div className="chat-stitch">
                 {flash?.success ? <div className="flash-banner">{flash.success}</div> : null}
 
@@ -60,7 +70,7 @@ export default function Chat({ pageMeta, chat, flash }) {
 
                 <div className="chat-stitch__row chat-stitch__row--assistant chat-stitch__row--wide">
                     <section className="chat-stitch__analysis">
-                        <div className="chat-stitch__analysis-title"><Icon name="check_circle" /> <span>{chat.analysis.title}</span></div>
+                        <div className="chat-stitch__analysis-title"><Icon name="check_circle" filled /> <span>{chat.analysis.title}</span></div>
                         <div className="chat-stitch__analysis-grid">
                             <article>
                                 <span>Protein</span>
@@ -84,32 +94,59 @@ export default function Chat({ pageMeta, chat, flash }) {
 
                 <div className="chat-stitch__chips">
                     {chat.chips.map((chip, index) => (
-                        <button key={chip} className={`chat-stitch__chip ${index === 0 ? 'is-primary' : ''}`.trim()} type="button">{chip}</button>
+                        <button
+                            key={chip}
+                            className={`chat-stitch__chip ${index === 0 ? 'is-primary' : ''}`.trim()}
+                            type="button"
+                            onClick={() => {
+                                if (chip === 'Add to Daily Log' && chat.messages?.[1]?.content) {
+                                    form.setData('message', chat.messages[1].content);
+                                }
+                                if (chip === 'Adjust Quantities' && editingMeal) {
+                                    setSelectedMealId(editingMeal.id);
+                                }
+                                if (chip === 'View Recipes') {
+                                    form.setData('message', 'Give me recipe ideas similar to this meal');
+                                    form.setData('notes', 'Need recipe ideas for this meal');
+                                }
+                            }}
+                        >
+                            {chip}
+                        </button>
                     ))}
                 </div>
 
                 <div className="chat-stitch__row chat-stitch__row--user">
                     <div className="chat-stitch__photo-card">
-                        <div className="chat-stitch__photo-mock" />
+                        <div className="chat-stitch__photo-mock">
+                            <div className="chat-stitch__photo-plate">
+                                <span className="chat-stitch__photo-leaf chat-stitch__photo-leaf--one" />
+                                <span className="chat-stitch__photo-leaf chat-stitch__photo-leaf--two" />
+                                <span className="chat-stitch__photo-topping chat-stitch__photo-topping--one" />
+                                <span className="chat-stitch__photo-topping chat-stitch__photo-topping--two" />
+                                <span className="chat-stitch__photo-topping chat-stitch__photo-topping--three" />
+                            </div>
+                        </div>
                         <p>{chat.photoPrompt}</p>
                     </div>
                 </div>
 
-                {chat.recentMeals?.length ? (
-                    <section className="recent-meals-card editorial-card">
-                        <div className="recent-meals-card__header">
-                            <h3>Recent Logs</h3>
-                            <span>{chat.recentMeals.length} items</span>
-                        </div>
+                <section className="recent-meals-card editorial-card">
+                    <div className="recent-meals-card__header">
+                        <h3>Recent Logs</h3>
+                        <span>{chat.recentMeals?.length ?? 0} items</span>
+                    </div>
+                    {chat.recentMeals?.length ? (
                         <div className="recent-meals-list">
                             {chat.recentMeals.map((meal) => (
                                 <article key={meal.id} className={`recent-meals-list__item ${selectedMealId === meal.id ? 'is-selected' : ''}`}>
-                                    <div>
+                                    <div className="recent-meals-list__copy">
                                         <strong>{meal.description}</strong>
-                                        <p>Saved at {meal.time}</p>
+                                        <p>{meal.meal_type} · {meal.time}</p>
+                                        {meal.notes ? <p className="recent-meals-list__notes">{meal.notes}</p> : null}
                                     </div>
                                     <div className="recent-meals-list__actions">
-                                        <span>{meal.calories} kcal</span>
+                                        <span className="recent-meals-list__calories">{meal.calories} kcal</span>
                                         <div className="recent-meals-list__buttons">
                                             <button type="button" className="text-button" onClick={() => setSelectedMealId(meal.id)}>Select</button>
                                             <button type="button" className="text-button text-button--danger" onClick={() => router.delete(`/chat/log/${meal.id}`, { preserveScroll: true })}>Delete</button>
@@ -118,8 +155,13 @@ export default function Chat({ pageMeta, chat, flash }) {
                                 </article>
                             ))}
                         </div>
-                    </section>
-                ) : null}
+                    ) : (
+                        <div className="empty-state-card">
+                            <strong>No meal logs yet</strong>
+                            <p>Start by typing what you ate in the composer below. Altafit will estimate the nutrition for you.</p>
+                        </div>
+                    )}
+                </section>
 
                 {editingMeal ? (
                     <form className="editorial-card meal-edit-card" onSubmit={submitEdit}>
@@ -129,25 +171,45 @@ export default function Chat({ pageMeta, chat, flash }) {
                         </div>
                         <div className="form-grid">
                             <label><span>Description</span><input value={editForm.data.description} onChange={(event) => editForm.setData('description', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.description} />
+                            <label><span>Meal Type</span><select value={editForm.data.meal_type} onChange={(event) => editForm.setData('meal_type', event.target.value)}>{chat.mealTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
+                            <FieldError message={editForm.errors.meal_type} />
+                            <label><span>Notes</span><input value={editForm.data.notes} onChange={(event) => editForm.setData('notes', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.notes} />
                             <label><span>Calories</span><input type="number" value={editForm.data.calories} onChange={(event) => editForm.setData('calories', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.calories} />
                             <label><span>Protein</span><input type="number" value={editForm.data.protein_g} onChange={(event) => editForm.setData('protein_g', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.protein_g} />
                             <label><span>Carbs</span><input type="number" value={editForm.data.carbs_g} onChange={(event) => editForm.setData('carbs_g', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.carbs_g} />
                             <label><span>Fat</span><input type="number" value={editForm.data.fat_g} onChange={(event) => editForm.setData('fat_g', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.fat_g} />
                             <label><span>Fiber</span><input type="number" value={editForm.data.fiber_g} onChange={(event) => editForm.setData('fiber_g', event.target.value)} /></label>
+                            <FieldError message={editForm.errors.fiber_g} />
                         </div>
-                        <button type="submit" className="primary-cta">Save Meal Changes</button>
+                        <button type="submit" className="primary-cta" disabled={editForm.processing}>{editForm.processing ? 'Saving Meal...' : 'Save Meal Changes'}</button>
                     </form>
                 ) : null}
             </div>
 
             <div className="chat-stitch__composer-wrap">
-                <form className="chat-stitch__composer" onSubmit={submit}>
-                    <button type="button" className="chat-stitch__composer-icon"><Icon name="add_circle" /></button>
-                    <input type="text" placeholder="Tell me what you ate..." value={form.data.message} onChange={(event) => form.setData('message', event.target.value)} />
-                    <div className="chat-stitch__composer-actions">
-                        <button type="button" className="chat-stitch__composer-icon"><Icon name="photo_camera" /></button>
-                        <button type="submit" className="chat-stitch__composer-send" disabled={form.processing || !form.data.message.trim()}><Icon name="arrow_upward" /></button>
+                <form className="chat-stitch__composer chat-stitch__composer--stacked" onSubmit={submit}>
+                    <div className="chat-stitch__composer-top">
+                        <button type="button" className="chat-stitch__composer-icon"><Icon name="add_circle" /></button>
+                        <input type="text" placeholder="Tell me what you ate..." value={form.data.message} onChange={(event) => form.setData('message', event.target.value)} />
+                        <div className="chat-stitch__composer-actions">
+                            <button type="button" className="chat-stitch__composer-icon"><Icon name="photo_camera" /></button>
+                            <button type="submit" className="chat-stitch__composer-send" disabled={form.processing || !form.data.message.trim()}>{form.processing ? <span className="button-spinner" /> : <Icon name="arrow_upward" />}</button>
+                        </div>
                     </div>
+                    <FieldError message={form.errors.message} />
+                    <div className="chat-stitch__composer-bottom">
+                        <select value={form.data.meal_type} onChange={(event) => form.setData('meal_type', event.target.value)}>
+                            {chat.mealTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                        <input type="text" placeholder="Optional notes" value={form.data.notes} onChange={(event) => form.setData('notes', event.target.value)} />
+                    </div>
+                    <FieldError message={form.errors.meal_type || form.errors.notes} />
                 </form>
             </div>
         </AppShell>

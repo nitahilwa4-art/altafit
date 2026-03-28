@@ -18,6 +18,12 @@ Route::patch('/chat/log/{meal}', [ChatController::class, 'update'])->name('chat.
 Route::delete('/chat/log/{meal}', [ChatController::class, 'destroy'])->name('chat.destroy');
 
 Route::get('/plans', PlansController::class)->name('plans.index');
+Route::post('/plans', [PlansController::class, 'store'])->name('plans.store');
+Route::patch('/plans/{plan}', [PlansController::class, 'update'])->name('plans.update');
+Route::patch('/plans/{plan}/activate', [PlansController::class, 'activate'])->name('plans.activate');
+Route::post('/plans/{plan}/milestones', [PlansController::class, 'storeMilestone'])->name('plans.milestones.store');
+Route::patch('/plans/milestones/{milestone}/toggle', [PlansController::class, 'toggleMilestone'])->name('plans.milestones.toggle');
+Route::delete('/plans/milestones/{milestone}', [PlansController::class, 'destroyMilestone'])->name('plans.milestones.destroy');
 
 Route::get('/profile', ProfileController::class)->name('profile.index');
 Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -8,15 +8,20 @@ const items = [
     { key: 'profile', label: 'Profile', href: '/profile', icon: 'person' },
 ];
 
-export default function BottomNav({ active, dashboardMode = false }) {
+export default function BottomNav({ active, dashboardMode = false, chatMode = false }) {
     return (
-        <nav className={`bottom-nav ${dashboardMode ? 'bottom-nav--dashboard' : ''}`.trim()}>
-            {items.map((item) => (
-                <Link key={item.key} href={item.href} className={`bottom-nav__item ${active === item.key ? 'is-active' : ''}`.trim()}>
-                    <Icon name={dashboardMode && item.key === 'dashboard' ? 'add_circle' : item.icon} />
-                    <span>{dashboardMode && item.key === 'dashboard' ? 'Log' : item.label}</span>
-                </Link>
-            ))}
+        <nav className={`bottom-nav ${dashboardMode ? 'bottom-nav--dashboard' : ''} ${chatMode ? 'bottom-nav--chat' : ''}`.trim()}>
+            {items.map((item) => {
+                const icon = dashboardMode && item.key === 'dashboard' ? 'add_circle' : item.icon;
+                const label = dashboardMode && item.key === 'dashboard' ? 'Log' : item.label;
+
+                return (
+                    <Link key={item.key} href={item.href} className={`bottom-nav__item ${active === item.key ? 'is-active' : ''}`.trim()}>
+                        <Icon name={icon} />
+                        <span>{label}</span>
+                    </Link>
+                );
+            })}
         </nav>
     );
 }

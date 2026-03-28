@@ -13,7 +13,9 @@ class Meal extends Model
     protected $fillable = [
         'user_id',
         'description',
+        'meal_type',
         'image_path',
+        'notes',
         'calories',
         'protein_g',
         'carbs_g',

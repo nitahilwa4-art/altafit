@@ -16,13 +16,14 @@ class ChatController extends Controller
     {
         $user = User::query()->with(['meals' => fn ($query) => $query->latest('logged_at')])->firstOrFail();
         $featuredMeal = $user->meals->first();
-        $recentMeals = $user->meals->take(6)->values();
+        $recentMeals = $user->meals->take(8)->values();
 
         return Inertia::render('Chat', [
             'pageMeta' => [
                 'title' => 'AI Chat',
                 'activeNav' => 'chat',
                 'calorieTarget' => $user->daily_calorie_goal,
+                'userInitial' => strtoupper(substr($user->name, 0, 1)),
             ],
             'chat' => [
                 'timestamp' => optional($featuredMeal?->logged_at)->format('l, h:i A') ?? 'Today, 12:45 PM',
@@ -47,16 +48,19 @@ class ChatController extends Controller
                     'fat' => $featuredMeal?->fat_g ?? 18,
                     'fiber' => $featuredMeal?->fiber_g ?? 6,
                     'calories' => $featuredMeal?->calories ?? 540,
-                    'note' => session('analysis_note', 'Great choice! High protein helps with your muscle recovery plan.'),
+                    'note' => session('analysis_note', $this->buildAnalysisNote($featuredMeal, $user)),
                     'confidence' => $featuredMeal?->confidence_score,
                 ],
                 'chips' => ['Add to Daily Log', 'Adjust Quantities', 'View Recipes'],
                 'photoPrompt' => 'How about this dinner?',
                 'draft' => '',
                 'editingMeal' => session('editing_meal'),
+                'mealTypes' => ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
                 'recentMeals' => $recentMeals->map(fn (Meal $meal) => [
                     'id' => $meal->id,
                     'description' => $meal->description,
+                    'meal_type' => $meal->meal_type ?: 'Meal',
+                    'notes' => $meal->notes,
                     'calories' => $meal->calories,
                     'protein' => $meal->protein_g,
                     'carbs' => $meal->carbs_g,
@@ -75,6 +79,8 @@ class ChatController extends Controller
     {
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:255'],
+            'meal_type' => ['nullable', 'string', 'max:50'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $user = User::query()->firstOrFail();
@@ -84,6 +90,8 @@ class ChatController extends Controller
         Meal::query()->create([
             'user_id' => $user->id,
             'description' => $estimate['description'],
+            'meal_type' => $validated['meal_type'] ?? $this->guessMealType(),
+            'notes' => $validated['notes'] ?? null,
             'calories' => $estimate['calories'],
             'protein_g' => $estimate['protein_g'],
             'carbs_g' => $estimate['carbs_g'],
@@ -102,6 +110,8 @@ class ChatController extends Controller
     {
         $validated = $request->validate([
             'description' => ['required', 'string', 'max:255'],
+            'meal_type' => ['nullable', 'string', 'max:50'],
+            'notes' => ['nullable', 'string', 'max:500'],
             'calories' => ['required', 'integer', 'min:0'],
             'protein_g' => ['required', 'integer', 'min:0'],
             'carbs_g' => ['required', 'integer', 'min:0'],
@@ -121,5 +131,38 @@ class ChatController extends Controller
         $meal->delete();
 
         return redirect()->route('chat.index')->with('success', 'Meal log removed.');
+    }
+
+    protected function guessMealType(): string
+    {
+        $hour = (int) now()->format('G');
+
+        return match (true) {
+            $hour < 10 => 'Breakfast',
+            $hour < 15 => 'Lunch',
+            $hour < 20 => 'Dinner',
+            default => 'Snack',
+        };
+    }
+
+    protected function buildAnalysisNote(?Meal $meal, User $user): string
+    {
+        if (! $meal) {
+            return 'Log a meal and Altafit will start tailoring nutrition feedback to your actual targets.';
+        }
+
+        if ($meal->protein_g >= 30) {
+            return 'Strong protein hit. This kind of meal supports recovery and makes it easier to stay on target later.';
+        }
+
+        if ($meal->fiber_g >= 6) {
+            return 'Nice fiber density. Meals like this usually help with fullness and steadier appetite control.';
+        }
+
+        if ($meal->calories > (int) round($user->daily_calorie_goal * 0.4)) {
+            return 'This meal used a big chunk of today\'s calories, so keep the next one lighter and protein-forward.';
+        }
+
+        return 'Solid log. You still have room to improve the day by balancing protein, hydration, and your next meal choice.';
     }
 }

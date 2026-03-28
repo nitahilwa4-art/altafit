@@ -1,6 +1,6 @@
 import Icon from '../ui/Icon';
 
-export default function TopBar({ calorieTarget = 2400, title, brandMode = false, chatMode = false }) {
+export default function TopBar({ calorieTarget = 2400, title, brandMode = false, chatMode = false, userInitial = 'A' }) {
     if (brandMode) {
         return (
             <header className="topbar topbar--brand">
@@ -8,9 +8,9 @@ export default function TopBar({ calorieTarget = 2400, title, brandMode = false,
                     <button type="button" className="topbar__menu-button" aria-label="Menu">
                         <Icon name="menu" />
                     </button>
-                    <div className="topbar__brand-wordmark">VITALITY</div>
+                    <div className="topbar__brand-wordmark">ALTAFIT</div>
                 </div>
-                <div className="topbar__photo topbar__photo--plain">A</div>
+                <div className="topbar__photo topbar__photo--plain">{userInitial}</div>
             </header>
         );
     }
@@ -23,7 +23,7 @@ export default function TopBar({ calorieTarget = 2400, title, brandMode = false,
                 </div>
                 <div className="topbar__title-only">{title ?? `${calorieTarget.toLocaleString()} kcal`}</div>
             </div>
-            <div className="topbar__photo">A</div>
+            <div className="topbar__photo">{userInitial}</div>
         </header>
     );
 }

@@ -5,9 +5,9 @@ export default function AppShell({ children, pageMeta = {}, topBarTitle, compact
     return (
         <div className="app-shell">
             <div className="app-shell__frame">
-                <TopBar calorieTarget={pageMeta.calorieTarget} title={topBarTitle} compact={compactTopBar} chatMode={chatMode} brandMode={brandMode} />
-                <main className={`app-shell__content ${chatMode ? 'app-shell__content--chat' : ''} ${brandMode ? 'app-shell__content--brand' : ''}`.trim()}>{children}</main>
-                {!chatMode ? <BottomNav active={pageMeta.activeNav} dashboardMode={dashboardMode} /> : null}
+                <TopBar calorieTarget={pageMeta.calorieTarget} title={topBarTitle} compact={compactTopBar} chatMode={chatMode} brandMode={brandMode} userInitial={pageMeta.userInitial} />
+                <main className={`app-shell__content ${chatMode ? 'app-shell__content--chat' : ''} ${brandMode ? 'app-shell__content--brand' : ''} ${dashboardMode ? 'app-shell__content--dashboard' : ''}`.trim()}>{children}</main>
+                <BottomNav active={pageMeta.activeNav} dashboardMode={dashboardMode} chatMode={chatMode} />
             </div>
         </div>
     );
