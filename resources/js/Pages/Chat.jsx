@@ -1,7 +1,10 @@
 import { router, useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../Layouts/AppShell';
+import ConfirmDialog from '../Components/ui/ConfirmDialog';
+import FlashBanner from '../Components/ui/FlashBanner';
 import Icon from '../Components/ui/Icon';
+import PageTransition from '../Components/ui/PageTransition';
 
 function FieldError({ message }) {
     if (!message) return null;
@@ -22,6 +25,22 @@ export default function Chat({ pageMeta, chat, flash }) {
         fat_g: editingMeal?.fat ?? 0,
         fiber_g: editingMeal?.fiber ?? 0,
     });
+
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterType, setFilterType] = useState('');
+
+    const filteredMeals = useMemo(() => {
+        let meals = chat.recentMeals ?? [];
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            meals = meals.filter((m) => m.description.toLowerCase().includes(q) || (m.notes && m.notes.toLowerCase().includes(q)));
+        }
+        if (filterType) {
+            meals = meals.filter((m) => m.meal_type === filterType);
+        }
+        return meals;
+    }, [chat.recentMeals, searchQuery, filterType]);
 
     useEffect(() => {
         if (!editingMeal) return;
@@ -49,10 +68,18 @@ export default function Chat({ pageMeta, chat, flash }) {
         editForm.patch(`/chat/log/${editingMeal.id}`, { preserveScroll: true });
     };
 
+    const confirmDelete = () => {
+        if (deleteTarget) {
+            router.delete(`/chat/log/${deleteTarget.id}`, { preserveScroll: true });
+            setDeleteTarget(null);
+        }
+    };
+
     return (
         <AppShell pageMeta={pageMeta} topBarTitle={`${pageMeta.calorieTarget?.toLocaleString?.() ?? pageMeta.calorieTarget} kcal target`} chatMode>
+            <FlashBanner message={flash?.success} />
+            <PageTransition>
             <div className="chat-stitch">
-                {flash?.success ? <div className="flash-banner">{flash.success}</div> : null}
 
                 <div className="chat-stitch__timestamp">{chat.timestamp}</div>
 
@@ -70,7 +97,7 @@ export default function Chat({ pageMeta, chat, flash }) {
 
                 <div className="chat-stitch__row chat-stitch__row--assistant chat-stitch__row--wide">
                     <section className="chat-stitch__analysis">
-                        <div className="chat-stitch__analysis-title"><Icon name="check_circle" filled /> <span>{chat.analysis.title}</span></div>
+                        <div className="chat-stitch__analysis-title"><Icon name="check_circle" filled /> <span>{chat.analysis.title}</span><span className={`confidence-badge confidence-badge--${chat.analysis.confidenceLevel ?? 'medium'}`}>{chat.analysis.confidenceLabel ?? 'Medium confidence'}</span></div>
                         <div className="chat-stitch__analysis-grid">
                             <article>
                                 <span>Protein</span>
@@ -136,9 +163,26 @@ export default function Chat({ pageMeta, chat, flash }) {
                         <h3>Recent Logs</h3>
                         <span>{chat.recentMeals?.length ?? 0} items</span>
                     </div>
-                    {chat.recentMeals?.length ? (
+                    <div className="recent-meals-card__filters">
+                        <input
+                            type="text"
+                            placeholder="Search meals..."
+                            className="recent-meals-card__search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <select
+                            className="recent-meals-card__filter-select"
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                        >
+                            <option value="">All Types</option>
+                            {chat.mealTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                    </div>
+                    {filteredMeals.length ? (
                         <div className="recent-meals-list">
-                            {chat.recentMeals.map((meal) => (
+                            {filteredMeals.map((meal) => (
                                 <article key={meal.id} className={`recent-meals-list__item ${selectedMealId === meal.id ? 'is-selected' : ''}`}>
                                     <div className="recent-meals-list__copy">
                                         <strong>{meal.description}</strong>
@@ -149,7 +193,7 @@ export default function Chat({ pageMeta, chat, flash }) {
                                         <span className="recent-meals-list__calories">{meal.calories} kcal</span>
                                         <div className="recent-meals-list__buttons">
                                             <button type="button" className="text-button" onClick={() => setSelectedMealId(meal.id)}>Select</button>
-                                            <button type="button" className="text-button text-button--danger" onClick={() => router.delete(`/chat/log/${meal.id}`, { preserveScroll: true })}>Delete</button>
+                                            <button type="button" className="text-button text-button--danger" onClick={() => setDeleteTarget(meal)}>Delete</button>
                                         </div>
                                     </div>
                                 </article>
@@ -157,8 +201,8 @@ export default function Chat({ pageMeta, chat, flash }) {
                         </div>
                     ) : (
                         <div className="empty-state-card">
-                            <strong>No meal logs yet</strong>
-                            <p>Start by typing what you ate in the composer below. Altafit will estimate the nutrition for you.</p>
+                            <strong>{searchQuery || filterType ? 'No matching meals' : 'No meal logs yet'}</strong>
+                            <p>{searchQuery || filterType ? 'Try adjusting your search or filter.' : 'Start by typing what you ate in the composer below. Altafit will estimate the nutrition for you.'}</p>
                         </div>
                     )}
                 </section>
@@ -191,6 +235,7 @@ export default function Chat({ pageMeta, chat, flash }) {
                     </form>
                 ) : null}
             </div>
+            </PageTransition>
 
             <div className="chat-stitch__composer-wrap">
                 <form className="chat-stitch__composer chat-stitch__composer--stacked" onSubmit={submit}>
@@ -212,6 +257,14 @@ export default function Chat({ pageMeta, chat, flash }) {
                     <FieldError message={form.errors.meal_type || form.errors.notes} />
                 </form>
             </div>
+
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title="Delete Meal"
+                message={`Delete "${deleteTarget?.description ?? ''}"? This will remove it from your daily totals.`}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </AppShell>
     );
 }

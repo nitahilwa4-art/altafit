@@ -38,6 +38,7 @@ class PlansController extends Controller
                 'activeNav' => 'plans',
                 'calorieTarget' => $user->daily_calorie_goal,
                 'userInitial' => strtoupper(substr($user->name, 0, 1)),
+                'theme' => $user->theme ?? 'light',
             ],
             'plansList' => $plans->map(fn (Plan $item) => [
                 'id' => $item->id,
@@ -176,5 +177,21 @@ class PlansController extends Controller
         $milestone->delete();
 
         return redirect()->route('plans.index')->with('success', 'Milestone removed.');
+    }
+
+    public function destroy(Plan $plan): RedirectResponse
+    {
+        $wasActive = $plan->is_active;
+        $userId = $plan->user_id;
+
+        $plan->milestones()->delete();
+        $plan->delete();
+
+        if ($wasActive) {
+            $nextPlan = Plan::query()->where('user_id', $userId)->latest('updated_at')->first();
+            $nextPlan?->update(['is_active' => true]);
+        }
+
+        return redirect()->route('plans.index')->with('success', 'Plan deleted.');
     }
 }

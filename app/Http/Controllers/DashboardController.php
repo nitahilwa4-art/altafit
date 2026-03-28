@@ -63,7 +63,21 @@ class DashboardController extends Controller
             return max(10, (int) round(100 - ($ratio * 90)));
         })->values();
 
-        $hydrationHistory = $user->waterLogs->take(6)->map(fn ($log) => [
+        $ringProgress = $user->daily_calorie_goal > 0
+            ? min((int) round(($consumedCalories / $user->daily_calorie_goal) * 100), 100)
+            : 0;
+        $proteinPercent = $user->protein_goal_g > 0 ? min((int) round(($consumedProtein / $user->protein_goal_g) * 100), 100) : 0;
+        $carbsPercent = $user->carbs_goal_g > 0 ? min((int) round(($consumedCarbs / $user->carbs_goal_g) * 100), 100) : 0;
+        $fatPercent = $user->fat_goal_g > 0 ? min((int) round(($consumedFat / $user->fat_goal_g) * 100), 100) : 0;
+
+        $chartMax = max($weekCalories->max() ?: 0, $user->daily_calorie_goal, 1000);
+        $step = (int) ceil($chartMax / 3 / 100) * 100;
+        $chartTop = max($step * 3, 300);
+        $yAxisLabels = collect([$chartTop, (int) round($chartTop * 0.66), (int) round($chartTop * 0.33), 0])
+            ->map(fn ($value) => $value >= 1000 ? rtrim(rtrim(number_format($value / 1000, 1), '0'), '.').'k' : (string) $value)
+            ->all();
+
+        $hydrationHistory = $todayWaterLogs->take(8)->map(fn ($log) => [
             'id' => $log->id,
             'amount' => $log->amount_ml,
             'time' => optional($log->logged_at)->format('H:i') ?? optional($log->created_at)->format('H:i'),
@@ -85,14 +99,19 @@ class DashboardController extends Controller
                 'activeNav' => 'dashboard',
                 'calorieTarget' => $user->daily_calorie_goal,
                 'userInitial' => strtoupper(substr($user->name, 0, 1)),
+                'theme' => $user->theme ?? 'light',
             ],
             'summary' => [
                 'remainingCalories' => $remainingCalories,
                 'calorieTarget' => $user->daily_calorie_goal,
                 'consumedCalories' => $consumedCalories,
+                'ringProgress' => $ringProgress,
                 'consumedProtein' => $consumedProtein,
                 'consumedCarbs' => $consumedCarbs,
                 'consumedFat' => $consumedFat,
+                'proteinPercent' => $proteinPercent,
+                'carbsPercent' => $carbsPercent,
+                'fatPercent' => $fatPercent,
                 'proteinGoal' => $user->protein_goal_g,
                 'carbsGoal' => $user->carbs_goal_g,
                 'fatGoal' => $user->fat_goal_g,
@@ -104,10 +123,13 @@ class DashboardController extends Controller
                 'averageCalories' => $averageCalories,
                 'todayMealsCount' => $todayMeals->count(),
                 'coachingTip' => $coachingTip,
+                'currentStreak' => $user->current_streak,
+                'longestStreak' => $user->longest_streak,
             ],
             'chart' => [
                 'labels' => $weekDays->pluck('label')->all(),
                 'points' => $chartPoints->all(),
+                'yAxisLabels' => $yAxisLabels,
             ],
             'hydrationPresets' => [150, 250, 500],
             'hydrationHistory' => $hydrationHistory,

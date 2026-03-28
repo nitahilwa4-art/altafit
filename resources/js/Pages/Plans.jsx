@@ -1,6 +1,10 @@
 import { router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import AppShell from '../Layouts/AppShell';
+import ConfirmDialog from '../Components/ui/ConfirmDialog';
+import FlashBanner from '../Components/ui/FlashBanner';
 import Icon from '../Components/ui/Icon';
+import PageTransition from '../Components/ui/PageTransition';
 
 function FieldError({ message }) {
     if (!message) return null;
@@ -11,6 +15,7 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
     const form = useForm(plan.form);
     const milestoneForm = useForm(plan.newMilestone);
     const createPlanForm = useForm(newPlanForm);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const submit = (event) => {
         event.preventDefault();
@@ -27,10 +32,20 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
         createPlanForm.post('/plans', { preserveScroll: true, onSuccess: () => createPlanForm.reset() });
     };
 
+    const confirmDelete = () => {
+        if (deleteTarget?.type === 'plan') {
+            router.delete(`/plans/${deleteTarget.id}`, { preserveScroll: true });
+        } else if (deleteTarget?.type === 'milestone') {
+            router.delete(`/plans/milestones/${deleteTarget.id}`, { preserveScroll: true });
+        }
+        setDeleteTarget(null);
+    };
+
     return (
         <AppShell pageMeta={pageMeta} brandMode>
-            {flash?.success ? <div className="flash-banner">{flash.success}</div> : null}
+            <FlashBanner message={flash?.success} />
 
+            <PageTransition>
             <div className="plans-stitch">
                 <section className="plans-stitch__section">
                     <div className="plans-stitch__section-head">
@@ -51,6 +66,7 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                                     ) : (
                                         <span className="plans-list-item__badge">Active</span>
                                     )}
+                                    <button type="button" className="text-button text-button--danger" onClick={() => setDeleteTarget({ type: 'plan', id: item.id, title: item.title })}>Delete</button>
                                 </div>
                             </div>
                         )) : (
@@ -95,7 +111,7 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                     <article className="plans-stitch__tip-card">
                         <div className="plans-stitch__tip-icon"><Icon name="lightbulb" filled /></div>
                         <div className="plans-stitch__tip-copy">
-                            <h4>Today’s Plan Tip</h4>
+                            <h4>Today's Plan Tip</h4>
                             <p>{plan.tip}</p>
                         </div>
                     </article>
@@ -219,7 +235,7 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                                             </div>
                                         </div>
                                     </button>
-                                    <button type="button" className="text-button text-button--danger" onClick={() => router.delete(`/plans/milestones/${item.id}`, { preserveScroll: true })}>Delete</button>
+                                    <button type="button" className="text-button text-button--danger" onClick={() => setDeleteTarget({ type: 'milestone', id: item.id, title: item.day })}>Delete</button>
                                 </div>
                             ))}
                         </article>
@@ -231,6 +247,15 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                     )}
                 </section>
             </div>
+            </PageTransition>
+
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title={deleteTarget?.type === 'plan' ? 'Delete Plan' : 'Delete Milestone'}
+                message={`Are you sure you want to delete "${deleteTarget?.title ?? ''}"? This action cannot be undone.`}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </AppShell>
     );
 }

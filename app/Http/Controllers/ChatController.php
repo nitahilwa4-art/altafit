@@ -24,6 +24,7 @@ class ChatController extends Controller
                 'activeNav' => 'chat',
                 'calorieTarget' => $user->daily_calorie_goal,
                 'userInitial' => strtoupper(substr($user->name, 0, 1)),
+                'theme' => $user->theme ?? 'light',
             ],
             'chat' => [
                 'timestamp' => optional($featuredMeal?->logged_at)->format('l, h:i A') ?? 'Today, 12:45 PM',
@@ -50,6 +51,8 @@ class ChatController extends Controller
                     'calories' => $featuredMeal?->calories ?? 540,
                     'note' => session('analysis_note', $this->buildAnalysisNote($featuredMeal, $user)),
                     'confidence' => $featuredMeal?->confidence_score,
+                    'confidenceLabel' => $this->confidenceLabel($featuredMeal?->confidence_score),
+                    'confidenceLevel' => $this->confidenceLevel($featuredMeal?->confidence_score),
                 ],
                 'chips' => ['Add to Daily Log', 'Adjust Quantities', 'View Recipes'],
                 'photoPrompt' => 'How about this dinner?',
@@ -101,6 +104,8 @@ class ChatController extends Controller
             'logged_at' => now(),
         ]);
 
+        $user->updateStreak();
+
         return redirect()->route('chat.index')
             ->with('success', 'Meal logged and analyzed from your text input.')
             ->with('analysis_note', $estimate['note']);
@@ -142,6 +147,28 @@ class ChatController extends Controller
             $hour < 15 => 'Lunch',
             $hour < 20 => 'Dinner',
             default => 'Snack',
+        };
+    }
+
+    protected function confidenceLabel(?float $confidence): string
+    {
+        $score = (float) ($confidence ?? 0);
+
+        return match (true) {
+            $score >= 0.85 => 'High confidence',
+            $score >= 0.65 => 'Medium confidence',
+            default => 'Low confidence',
+        };
+    }
+
+    protected function confidenceLevel(?float $confidence): string
+    {
+        $score = (float) ($confidence ?? 0);
+
+        return match (true) {
+            $score >= 0.85 => 'high',
+            $score >= 0.65 => 'medium',
+            default => 'low',
         };
     }
 

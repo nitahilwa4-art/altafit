@@ -1,6 +1,8 @@
 import { router, useForm } from '@inertiajs/react';
 import AppShell from '../Layouts/AppShell';
+import FlashBanner from '../Components/ui/FlashBanner';
 import Icon from '../Components/ui/Icon';
+import PageTransition from '../Components/ui/PageTransition';
 
 function FieldError({ message }) {
     if (!message) return null;
@@ -9,6 +11,7 @@ function FieldError({ message }) {
 
 export default function Profile({ pageMeta, profile, flash }) {
     const form = useForm(profile.form);
+    const isDark = pageMeta.theme === 'dark';
 
     const submit = (event) => {
         event.preventDefault();
@@ -17,9 +20,10 @@ export default function Profile({ pageMeta, profile, flash }) {
 
     return (
         <AppShell pageMeta={pageMeta} topBarTitle="Profile & Goals">
-            {flash?.success ? <div className="flash-banner">{flash.success}</div> : null}
+            <FlashBanner message={flash?.success} />
 
-            <section className="profile-header">
+            <PageTransition>
+            <section className="profile-header profile-header--animated">
                 <div className="profile-header__avatar">
                     <div className="avatar avatar--lg">{pageMeta.userInitial ?? 'A'}</div>
                     <button type="button" className="profile-header__edit"><Icon name="edit" filled /></button>
@@ -29,7 +33,7 @@ export default function Profile({ pageMeta, profile, flash }) {
                 <small className="profile-header__goal-delta">{profile.goalDelta}</small>
             </section>
 
-            <section className="profile-stats profile-stats--wide">
+            <section className="profile-stats profile-stats--wide profile-stats--animated">
                 <article className="editorial-card compact-stat">
                     <div className="compact-stat__icon"><Icon name="local_fire_department" filled /></div>
                     <span>Daily Target</span>
@@ -60,6 +64,20 @@ export default function Profile({ pageMeta, profile, flash }) {
             <section className="stack-section">
                 <div className="eyebrow">Preferences</div>
                 <article className="settings-list editorial-card">
+                    <div className="settings-list__item">
+                        <div className="settings-list__main">
+                            <div className="settings-list__icon"><Icon name={isDark ? 'dark_mode' : 'light_mode'} filled /></div>
+                            <div>
+                                <h3>Dark Mode</h3>
+                                <p>{isDark ? 'Dark theme is active' : 'Light theme is active'}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            className={`toggle ${isDark ? 'is-on' : ''}`}
+                            onClick={() => router.post('/profile/theme', {}, { preserveScroll: true })}
+                        />
+                    </div>
                     {profile.settings.map((setting) => {
                         const iconName = setting.title === 'Smart Reminders'
                             ? 'notifications_active'
@@ -107,6 +125,7 @@ export default function Profile({ pageMeta, profile, flash }) {
                 <button type="submit" className="primary-cta" disabled={form.processing}>{form.processing ? 'Saving Profile...' : 'Save Changes'}</button>
                 <button type="button" className="ghost-cta" onClick={() => router.visit('/dashboard')}>Back to Dashboard</button>
             </form>
+            </PageTransition>
         </AppShell>
     );
 }

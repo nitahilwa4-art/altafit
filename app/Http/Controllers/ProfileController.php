@@ -21,6 +21,7 @@ class ProfileController extends Controller
                 'activeNav' => 'profile',
                 'calorieTarget' => $user->daily_calorie_goal,
                 'userInitial' => strtoupper(substr($user->name, 0, 1)),
+                'theme' => $user->theme ?? 'light',
             ],
             'profile' => [
                 'name' => $user->name,
@@ -78,5 +79,15 @@ class ProfileController extends Controller
         ]);
 
         return redirect()->route('profile.index')->with('success', 'Profile goals updated.');
+    }
+
+    public function toggleTheme(): RedirectResponse
+    {
+        $user = User::query()->firstOrFail();
+        $user->update([
+            'theme' => $user->theme === 'dark' ? 'light' : 'dark',
+        ]);
+
+        return redirect()->back();
     }
 }

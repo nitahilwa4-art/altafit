@@ -27,6 +27,10 @@ class User extends Authenticatable
         'fat_goal_g',
         'hydration_goal_ml',
         'reminders_enabled',
+        'current_streak',
+        'longest_streak',
+        'last_logged_date',
+        'theme',
     ];
 
     protected $hidden = [
@@ -42,7 +46,28 @@ class User extends Authenticatable
             'current_weight' => 'decimal:2',
             'goal_weight' => 'decimal:2',
             'reminders_enabled' => 'boolean',
+            'last_logged_date' => 'date',
         ];
+    }
+
+    public function updateStreak(): void
+    {
+        $today = now()->toDateString();
+
+        if ($this->last_logged_date?->toDateString() === $today) {
+            return;
+        }
+
+        $yesterday = now()->subDay()->toDateString();
+        $isConsecutive = $this->last_logged_date?->toDateString() === $yesterday;
+
+        $newStreak = $isConsecutive ? $this->current_streak + 1 : 1;
+
+        $this->update([
+            'current_streak' => $newStreak,
+            'longest_streak' => max($this->longest_streak, $newStreak),
+            'last_logged_date' => $today,
+        ]);
     }
 
     public function meals(): HasMany

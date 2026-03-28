@@ -1,6 +1,13 @@
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 import AppShell from '../Layouts/AppShell';
+import AnimatedNumber from '../Components/ui/AnimatedNumber';
+import ConfirmDialog from '../Components/ui/ConfirmDialog';
+import FlashBanner from '../Components/ui/FlashBanner';
 import Icon from '../Components/ui/Icon';
+import PageTransition from '../Components/ui/PageTransition';
+import ProgressBar from '../Components/ui/ProgressBar';
+import ProgressRing from '../Components/ui/ProgressRing';
 
 function chartPath(points) {
     return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${(index / (points.length - 1)) * 100},${point}`).join(' ');
@@ -8,39 +15,55 @@ function chartPath(points) {
 
 export default function Dashboard({ pageMeta, summary, chart, hydrationPresets = [], hydrationHistory = [], flash }) {
     const path = chartPath(chart.points);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+
+    const confirmDeleteWater = () => {
+        if (deleteTarget) {
+            router.delete(`/dashboard/hydration/${deleteTarget}`, { preserveScroll: true });
+            setDeleteTarget(null);
+        }
+    };
 
     return (
         <AppShell pageMeta={pageMeta} dashboardMode>
-            {flash?.success ? <div className="flash-banner">{flash.success}</div> : null}
+            <FlashBanner message={flash?.success} />
 
+            <PageTransition>
             <section className="dashboard-stitch">
                 <section className="dashboard-ring-wrap">
-                    <div className="dashboard-ring">
-                        <svg className="dashboard-ring__svg" viewBox="0 0 192 192">
-                            <circle className="dashboard-ring__bg" cx="96" cy="96" r="88" />
-                            <circle className="dashboard-ring__progress" cx="96" cy="96" r="88" />
-                        </svg>
+                    <ProgressRing value={summary.ringProgress} className="dashboard-ring">
                         <div className="dashboard-ring__content">
                             <span>Remaining</span>
-                            <strong>{summary.remainingCalories}</strong>
-                            <small>{summary.consumedCalories} of {summary.calorieTarget} kcal</small>
+                            <strong><AnimatedNumber value={summary.remainingCalories} /></strong>
+                            <small><AnimatedNumber value={summary.consumedCalories} /> of <AnimatedNumber value={summary.calorieTarget} /> kcal</small>
                         </div>
-                    </div>
+                    </ProgressRing>
                 </section>
 
                 <section className="dashboard-macros">
                     {[
-                        ['Prot', summary.consumedProtein, summary.proteinGoal, 'g', 'primary'],
-                        ['Carb', summary.consumedCarbs, summary.carbsGoal, 'g', 'secondary'],
-                        ['Fat', summary.consumedFat, summary.fatGoal, 'g', 'tertiary'],
-                    ].map(([label, value, goal, unit, tone]) => (
+                        ['Prot', summary.consumedProtein, summary.proteinGoal, summary.proteinPercent, 'g', 'primary'],
+                        ['Carb', summary.consumedCarbs, summary.carbsGoal, summary.carbsPercent, 'g', 'secondary'],
+                        ['Fat', summary.consumedFat, summary.fatGoal, summary.fatPercent, 'g', 'tertiary'],
+                    ].map(([label, value, goal, percent, unit, tone]) => (
                         <article key={label} className={`dashboard-macro-card dashboard-macro-card--${tone}`}>
                             <p>{label}</p>
-                            <strong>{value}<span>{unit}</span></strong>
+                            <strong><AnimatedNumber value={value} /><span>{unit}</span></strong>
                             <small>{goal}{unit} goal</small>
+                            <ProgressBar value={percent} tone={tone} className="dashboard-macro-card__bar" />
                         </article>
                     ))}
                 </section>
+
+                {summary.currentStreak > 0 ? (
+                    <article className="streak-card editorial-card">
+                        <div className="streak-card__badge"><Icon name="local_fire_department" filled /></div>
+                        <div className="streak-card__content">
+                            <strong><AnimatedNumber value={summary.currentStreak} /> day streak 🔥</strong>
+                            <small>Longest: {summary.longestStreak} days</small>
+                        </div>
+                    </article>
+                ) : null}
 
                 <section className="dashboard-progress-block">
                     <div className="dashboard-progress-head">
@@ -84,10 +107,9 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                     </div>
                     <div className="dashboard-chart">
                         <div className="dashboard-chart__ylabels">
-                            <span>3k</span>
-                            <span>2k</span>
-                            <span>1k</span>
-                            <span>0</span>
+                            {chart.yAxisLabels.map((label) => (
+                                <span key={label}>{label}</span>
+                            ))}
                         </div>
                         <div className="dashboard-chart__plot">
                             <div className="dashboard-chart__grid">
@@ -99,8 +121,8 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                             <svg viewBox="0 0 100 100" preserveAspectRatio="none">
                                 <defs>
                                     <linearGradient id="dashboardChartGradient" x1="0" x2="0" y1="0" y2="1">
-                                        <stop offset="0%" stopColor="#006a34" stopOpacity="0.2" />
-                                        <stop offset="100%" stopColor="#006a34" stopOpacity="0" />
+                                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.2" />
+                                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
                                     </linearGradient>
                                 </defs>
                                 <path d={`${path} L 100,100 L 0,100 Z`} className="dashboard-chart__area" fill="url(#dashboardChartGradient)" />
@@ -128,7 +150,7 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                             <div>
                                 <h3>Hydration</h3>
                                 <p>{summary.hydrationCurrent}L of {summary.hydrationTarget}L</p>
-                                <small>{summary.hydrationPercent}% completed today</small>
+                                <ProgressBar value={summary.hydrationPercent} tone="tertiary" className="dashboard-macro-card__bar" />
                             </div>
                         </div>
                         <div className="dashboard-hydration-card__actions">
@@ -153,7 +175,6 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                                     type="button"
                                     className="hydration-preset-chip"
                                     onClick={() => router.post('/dashboard/hydration/add', { amount_ml: amount }, { preserveScroll: true })}
-                                    disabled={false}
                                 >
                                     +{amount} ml
                                 </button>
@@ -163,7 +184,7 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
 
                     <article className="hydration-history-card editorial-card">
                         <div className="recent-meals-card__header">
-                            <h3>Recent Water Logs</h3>
+                            <h3>Today's Water Logs</h3>
                             <span>{hydrationHistory.length} entries</span>
                         </div>
                         {hydrationHistory.length ? (
@@ -177,7 +198,7 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                                         <button
                                             type="button"
                                             className="text-button text-button--danger"
-                                            onClick={() => router.delete(`/dashboard/hydration/${log.id}`, { preserveScroll: true })}
+                                            onClick={() => setDeleteTarget(log.id)}
                                         >
                                             Remove
                                         </button>
@@ -193,6 +214,16 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                     </article>
                 </section>
             </section>
+            </PageTransition>
+
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title="Remove Water Log"
+                message="Are you sure you want to remove this hydration entry?"
+                confirmLabel="Remove"
+                onConfirm={confirmDeleteWater}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </AppShell>
     );
 }
