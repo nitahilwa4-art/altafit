@@ -15,6 +15,9 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+});
+
+Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);
 });
@@ -45,4 +48,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', ProfileController::class)->name('profile.index');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/theme', [ProfileController::class, 'toggleTheme'])->name('profile.theme');
+    Route::post('/profile/recalculate', [ProfileController::class, 'recalculate'])->name('profile.recalculate');
 });

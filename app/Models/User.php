@@ -31,6 +31,13 @@ class User extends Authenticatable
         'longest_streak',
         'last_logged_date',
         'theme',
+        'age',
+        'height_cm',
+        'gender',
+        'activity_level',
+        'weight_goal',
+        'dietary_restrictions',
+        'food_preferences',
     ];
 
     protected $hidden = [
@@ -47,6 +54,8 @@ class User extends Authenticatable
             'goal_weight' => 'decimal:2',
             'reminders_enabled' => 'boolean',
             'last_logged_date' => 'date',
+            'dietary_restrictions' => 'array',
+            'food_preferences' => 'array',
         ];
     }
 

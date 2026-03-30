@@ -69,11 +69,16 @@ export default function Login() {
                     <button className="button button--primary w-full" disabled={processing}>
                         Log in
                     </button>
-                    
+
                     <p className="login-footer">
                         Mock Credentials: <br/> <strong>elena@altafit.local / password</strong>
                     </p>
                 </form>
+
+                <p className="login-footer">
+                    Don't have an account?{' '}
+                    <a href="/register" style={{ color: 'var(--primary)', fontWeight: 700 }}>Create one</a>
+                </p>
             </div>
         </main>
     );

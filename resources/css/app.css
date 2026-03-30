@@ -194,6 +194,13 @@ html.dark .login-card { border-color: rgba(255, 255, 255, 0.04); }
 .ghost-cta:hover { border-color: var(--primary); color: var(--primary); }
 .w-full { width: 100%; }
 
+/* ── Shared form inputs for guest & profile ── */
+select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235c5a5a' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; cursor: pointer; }
+select.form-input option { background: var(--surface-card); color: var(--text); }
+.form-input[type="number"] { -moz-appearance: textfield; }
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
 .app-shell { min-height: 100vh; padding: 24px; }
 .app-shell__frame {
     max-width: var(--content-width);
@@ -1637,6 +1644,132 @@ html.dark .chat-stitch__analysis-grid article {
 .settings-list__item--danger { border-top: 1px solid rgba(175,172,172,0.12); margin-top: 4px; }
 .settings-list__item--danger .settings-list__icon { color: var(--danger, #dc3545); }
 .settings-list__item--static { opacity: 0.65; }
+
+/* ── Preference Calculator ── */
+.pref-computed-card {
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(109,254,156,0.18), rgba(255,255,255,0.92));
+    border: 1px solid rgba(109,254,156,0.2);
+    display: grid;
+    gap: 10px;
+}
+.pref-computed-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pref-computed-card__head span { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--primary); }
+.pref-computed-card__hint { font-size: 11px; color: var(--muted); font-weight: 600; }
+.pref-computed-card__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.pref-computed-card__grid > div {
+    text-align: center;
+    padding: 8px 4px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+}
+.pref-computed-card__grid strong { font-size: 18px; font-weight: 900; letter-spacing: -0.04em; display: block; }
+.pref-computed-card__grid small { font-size: 10px; color: var(--muted); font-weight: 600; }
+.pref-computed-card__note { font-size: 11px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+/* ── Dietary Preferences ── */
+.pref-dietary-card { padding: 20px; display: grid; gap: 16px; }
+.pref-dietary-tabs { display: flex; gap: 4px; border-bottom: 1px solid rgba(175,172,172,0.15); padding-bottom: 12px; }
+.pref-dietary-tab {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid rgba(175,172,172,0.2);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.pref-dietary-tab.is-active { color: white; background: var(--primary); border-color: var(--primary); }
+.pref-checkbox-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.pref-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(47,46,46,0.06);
+    border: 1px solid rgba(175,172,172,0.2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.pref-checkbox-item input { display: none; }
+.pref-checkbox-item:has(input:checked) {
+    background: rgba(109,254,156,0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.pref-cuisine-section { display: grid; gap: 12px; }
+.pref-tag-input-row { display: flex; gap: 8px; align-items: center; }
+.pref-tag-add-btn {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+.pref-tag-add-btn:hover { background: #22af63; }
+.pref-tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.pref-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(109,254,156,0.15);
+    border: 1px solid rgba(109,254,156,0.3);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+}
+.pref-tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    display: grid;
+    place-items: center;
+}
+
+html.dark .pref-computed-card { background: linear-gradient(135deg, rgba(42,122,74,0.2), rgba(30,30,30,0.92)); }
+html.dark .pref-computed-card__grid > div { background: rgba(255,255,255,0.06); }
+html.dark .pref-checkbox-item { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+html.dark .pref-dietary-tab { border-color: rgba(255,255,255,0.1); }
+html.dark .pref-dietary-tab:not(.is-active) { color: rgba(255,255,255,0.5); }
+
+@media (max-width: 640px) {
+    .pref-computed-card__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pref-checkbox-grid { gap: 6px; }
+    .pref-checkbox-item { font-size: 12px; padding: 7px 12px; }
+}
 .toggle {
     width: 44px;
     height: 24px;
