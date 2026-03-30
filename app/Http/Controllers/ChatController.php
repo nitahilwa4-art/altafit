@@ -12,9 +12,9 @@ use Inertia\Response;
 
 class ChatController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
-        $user = User::query()->with(['meals' => fn ($query) => $query->latest('logged_at')])->firstOrFail();
+        $user = $request->user()->load(['meals' => fn ($query) => $query->latest('logged_at')]);
         $featuredMeal = $user->meals->first();
         $recentMeals = $user->meals->take(8)->values();
 
@@ -86,7 +86,7 @@ class ChatController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $user = User::query()->firstOrFail();
+        $user = $request->user();
         $message = trim($validated['message']);
         $estimate = NutritionEstimator::estimate($message);
 
@@ -131,8 +131,9 @@ class ChatController extends Controller
             ->with('editing_meal', $meal->id);
     }
 
-    public function destroy(Meal $meal): RedirectResponse
+    public function destroy(Request $request, Meal $meal): RedirectResponse
     {
+        abort_if($meal->user_id !== $request->user()->id, 403);
         $meal->delete();
 
         return redirect()->route('chat.index')->with('success', 'Meal log removed.');

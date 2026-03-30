@@ -9,13 +9,15 @@ import PageTransition from '../Components/ui/PageTransition';
 import ProgressBar from '../Components/ui/ProgressBar';
 import ProgressRing from '../Components/ui/ProgressRing';
 
-function chartPath(points) {
-    return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${(index / (points.length - 1)) * 100},${point}`).join(' ');
+function chartPath(data) {
+    if (!data || data.length === 0) return '';
+    return data.map((d, index) => `${index === 0 ? 'M' : 'L'} ${(index / (data.length - 1)) * 100},${d.y}`).join(' ');
 }
 
 export default function Dashboard({ pageMeta, summary, chart, hydrationPresets = [], hydrationHistory = [], flash }) {
-    const path = chartPath(chart.points);
+    const path = chartPath(chart.data || []);
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [hoveredDay, setHoveredDay] = useState(null);
 
     const confirmDeleteWater = () => {
         if (deleteTarget) {
@@ -75,7 +77,7 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                             <small>Current Weight</small>
                             <strong>{summary.weeklyWeight}</strong>
                         </div>
-                        <Icon name="trending_down" className="dashboard-progress-card__icon" />
+                        <Icon name={summary.weightTrendDir ?? 'trending_flat'} className="dashboard-progress-card__icon" />
                     </article>
                     <article className="dashboard-insight-card editorial-card">
                         <div>
@@ -126,17 +128,35 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                                     </linearGradient>
                                 </defs>
                                 <path d={`${path} L 100,100 L 0,100 Z`} className="dashboard-chart__area" fill="url(#dashboardChartGradient)" />
+                                {chart.targetY > 0 && (
+                                    <line x1="0" y1={chart.targetY} x2="100" y2={chart.targetY} className="dashboard-chart__target" strokeDasharray="2,2" />
+                                )}
                                 <path d={path} className="dashboard-chart__line" />
                             </svg>
-                            <div className="dashboard-chart__marker">
-                                <div className="dashboard-chart__pulse-wrap">
-                                    <div className="dashboard-chart__pulse" />
-                                    <div className="dashboard-chart__dot" />
-                                </div>
+                            <div className="dashboard-chart__markers">
+                                {chart.data && chart.data.map((d, index) => {
+                                    const x = (index / (chart.data.length - 1)) * 100;
+                                    const isHovered = hoveredDay === index;
+                                    return (
+                                        <div 
+                                            key={index} 
+                                            className="dashboard-chart__point-wrap" 
+                                            style={{ left: `${x}%`, top: `${d.y}%` }}
+                                            onMouseEnter={() => setHoveredDay(index)}
+                                            onMouseLeave={() => setHoveredDay(null)}
+                                            onClick={() => setHoveredDay(isHovered ? null : index)}
+                                        >
+                                            <div className={`dashboard-chart__point ${d.isOver ? 'dashboard-chart__point--over' : ''}`} />
+                                            <div className={`dashboard-chart__tooltip ${isHovered ? 'is-visible' : ''}`}>
+                                                <strong>{d.calories}</strong> <span>kcal</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                             <div className="dashboard-chart__xlabels">
-                                {chart.labels.map((label, index) => (
-                                    <span key={`${label}-${index}`} className={index === chart.labels.length - 1 ? 'is-active' : ''}>{label}</span>
+                                {chart.data && chart.data.map((d, index) => (
+                                    <span key={`${d.label}-${index}`} className={index === chart.data.length - 1 ? 'is-active' : ''}>{d.label}</span>
                                 ))}
                             </div>
                         </div>

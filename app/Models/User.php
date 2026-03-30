@@ -84,4 +84,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Plan::class);
     }
+
+    public function weightLogs(): HasMany
+    {
+        return $this->hasMany(WeightLog::class);
+    }
 }

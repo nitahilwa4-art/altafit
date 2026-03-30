@@ -14,9 +14,9 @@ use Inertia\Response;
 
 class PlansController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
-        $user = User::query()->with(['plans.milestones', 'meals', 'waterLogs'])->firstOrFail();
+        $user = $request->user()->load(['plans' => fn ($query) => $query->with('milestones'), 'meals', 'waterLogs']);
         $plans = $user->plans()->with('milestones')->latest('is_active')->latest('updated_at')->get();
         $plan = $plans->firstWhere('is_active', true) ?? $plans->firstOrFail();
         $recommendedMeals = Meal::query()->where('user_id', $user->id)->latest('logged_at')->take(3)->get();
@@ -112,7 +112,7 @@ class PlansController extends Controller
             'tip' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $user = User::query()->firstOrFail();
+        $user = $request->user();
 
         $plan = $user->plans()->create([
             ...$validated,

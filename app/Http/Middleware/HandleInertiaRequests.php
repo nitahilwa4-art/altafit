@@ -23,6 +23,9 @@ class HandleInertiaRequests extends Middleware
                 'brand' => 'Altafit',
                 'tagline' => 'Editorial wellness tracker',
             ],
+            'auth' => [
+                'user' => $request->user(),
+            ],
         ];
     }
 }

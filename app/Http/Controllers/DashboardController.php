@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Meal;
 use App\Models\User;
 use App\Models\WaterLog;
+use App\Models\WeightLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -12,12 +14,12 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
-        $user = User::query()->with([
+        $user = $request->user()->load([
             'meals' => fn ($query) => $query->latest('logged_at'),
             'waterLogs' => fn ($query) => $query->latest('logged_at'),
-        ])->firstOrFail();
+        ]);
 
         $today = Carbon::now()->toDateString();
         $todayMeals = $user->meals->filter(fn ($meal) => optional($meal->logged_at)->toDateString() === $today);
@@ -50,18 +52,56 @@ class DashboardController extends Controller
 
         $weekCalories = $weekDays->map(fn (array $day) => (int) ($caloriesByDay[$day['date']] ?? 0))->values();
         $averageCalories = (int) round($weekCalories->avg() ?? 0);
-        $yesterdayCalories = (int) ($weekCalories->slice(-2, 1)->first() ?? 0);
-        $deltaCalories = $consumedCalories - $yesterdayCalories;
-        $deltaPrefix = $deltaCalories > 0 ? '+' : '';
-        $weeklyChange = $deltaCalories === 0
-            ? 'No change'
-            : $deltaPrefix.$deltaCalories.' kcal vs yesterday';
+        $lastWeekAverage = Meal::query()
+            ->where('user_id', $user->id)
+            ->whereBetween('logged_at', [now()->subDays(13)->startOfDay(), now()->subDays(7)->endOfDay()])
+            ->avg('calories') ?? 0;
 
-        $chartPoints = $weekDays->map(function (array $day) use ($caloriesByDay, $user) {
+        $weeklyDiff = (int) round($averageCalories - $lastWeekAverage);
+        $weeklyChange = $weeklyDiff > 0 ? "+{$weeklyDiff} kcal/day vs last week" : "{$weeklyDiff} kcal/day vs last week";
+
+        // Weight History (Last 7 Days)
+        $weightLogs = $user->weightLogs()
+            ->where('logged_date', '>=', now()->subDays(6)->toDateString())
+            ->orderBy('logged_date', 'asc')
+            ->get();
+            
+        // Jika belum ada logs, setidaknya masukkan current weight
+        if ($weightLogs->isEmpty()) {
+            $weightLogs->push(new \App\Models\WeightLog([
+                'logged_date' => now()->toDateString(),
+                'weight_kg' => $user->current_weight,
+            ]));
+        }
+
+        $earliestWeight = $weightLogs->first()->weight_kg;
+        $latestWeight = $weightLogs->last()->weight_kg;
+        $weightDelta = (float) $latestWeight - (float) $earliestWeight;
+        
+        $weightTrendDir = $weightDelta > 0 ? 'trending_up' : ($weightDelta < 0 ? 'trending_down' : 'trending_flat');
+
+        $chartMax = max($weekCalories->max() ?: 0, $user->daily_calorie_goal, 1000);
+        $step = (int) ceil($chartMax / 3 / 100) * 100;
+        $chartTop = max($step * 3, 300);
+        $yAxisLabels = collect([$chartTop, (int) round($chartTop * 0.66), (int) round($chartTop * 0.33), 0])
+             ->map(fn ($value) => $value >= 1000 ? rtrim(rtrim(number_format($value / 1000, 1), '0'), '.').'k' : (string) $value)
+             ->all();
+
+        $chartData = $weekDays->map(function (array $day) use ($caloriesByDay, $chartTop, $user) {
             $value = (int) ($caloriesByDay[$day['date']] ?? 0);
-            $ratio = $user->daily_calorie_goal > 0 ? min($value / $user->daily_calorie_goal, 1) : 0;
-            return max(10, (int) round(100 - ($ratio * 90)));
+            $ratio = $chartTop > 0 ? min($value / $chartTop, 1) : 0;
+            // 5 to 95 for visual padding in SVG
+            $y = max(5, (int) round(100 - ($ratio * 90)));
+            return [
+                'label' => $day['label'],
+                'calories' => $value,
+                'y' => $y,
+                'isOver' => $value > $user->daily_calorie_goal,
+            ];
         })->values();
+
+        $targetRatio = $chartTop > 0 ? min($user->daily_calorie_goal / $chartTop, 1) : 0;
+        $targetY = max(5, (int) round(100 - ($targetRatio * 90)));
 
         $ringProgress = $user->daily_calorie_goal > 0
             ? min((int) round(($consumedCalories / $user->daily_calorie_goal) * 100), 100)
@@ -69,13 +109,6 @@ class DashboardController extends Controller
         $proteinPercent = $user->protein_goal_g > 0 ? min((int) round(($consumedProtein / $user->protein_goal_g) * 100), 100) : 0;
         $carbsPercent = $user->carbs_goal_g > 0 ? min((int) round(($consumedCarbs / $user->carbs_goal_g) * 100), 100) : 0;
         $fatPercent = $user->fat_goal_g > 0 ? min((int) round(($consumedFat / $user->fat_goal_g) * 100), 100) : 0;
-
-        $chartMax = max($weekCalories->max() ?: 0, $user->daily_calorie_goal, 1000);
-        $step = (int) ceil($chartMax / 3 / 100) * 100;
-        $chartTop = max($step * 3, 300);
-        $yAxisLabels = collect([$chartTop, (int) round($chartTop * 0.66), (int) round($chartTop * 0.33), 0])
-            ->map(fn ($value) => $value >= 1000 ? rtrim(rtrim(number_format($value / 1000, 1), '0'), '.').'k' : (string) $value)
-            ->all();
 
         $hydrationHistory = $todayWaterLogs->take(8)->map(fn ($log) => [
             'id' => $log->id,
@@ -119,6 +152,7 @@ class DashboardController extends Controller
                 'hydrationTarget' => round($user->hydration_goal_ml / 1000, 1),
                 'hydrationPercent' => $user->hydration_goal_ml > 0 ? min((int) round(($hydrationCurrentMl / $user->hydration_goal_ml) * 100), 100) : 0,
                 'weeklyWeight' => number_format((float) $user->current_weight, 1).' kg',
+                'weightTrendDir' => $weightTrendDir,
                 'weeklyChange' => $weeklyChange,
                 'averageCalories' => $averageCalories,
                 'todayMealsCount' => $todayMeals->count(),
@@ -127,9 +161,9 @@ class DashboardController extends Controller
                 'longestStreak' => $user->longest_streak,
             ],
             'chart' => [
-                'labels' => $weekDays->pluck('label')->all(),
-                'points' => $chartPoints->all(),
+                'data' => $chartData->all(),
                 'yAxisLabels' => $yAxisLabels,
+                'targetY' => $targetY,
             ],
             'hydrationPresets' => [150, 250, 500],
             'hydrationHistory' => $hydrationHistory,
@@ -145,7 +179,7 @@ class DashboardController extends Controller
             'amount_ml' => ['nullable', 'integer', 'min:50', 'max:2000'],
         ]);
 
-        $user = User::query()->firstOrFail();
+        $user = $request->user();
         $amount = (int) ($validated['amount_ml'] ?? 250);
 
         WaterLog::query()->create([
@@ -157,9 +191,9 @@ class DashboardController extends Controller
         return redirect()->route('dashboard.index')->with('success', "Hydration updated +{$amount} ml.");
     }
 
-    public function removeWater(): RedirectResponse
+    public function removeWater(Request $request): RedirectResponse
     {
-        $user = User::query()->firstOrFail();
+        $user = $request->user();
         $latest = WaterLog::query()->where('user_id', $user->id)->latest('logged_at')->latest('id')->first();
 
         if ($latest) {
@@ -169,8 +203,9 @@ class DashboardController extends Controller
         return redirect()->route('dashboard.index')->with('success', 'Latest hydration entry removed.');
     }
 
-    public function destroyWater(WaterLog $waterLog): RedirectResponse
+    public function destroyWater(Request $request, WaterLog $waterLog): RedirectResponse
     {
+        abort_if($waterLog->user_id !== $request->user()->id, 403);
         $waterLog->delete();
 
         return redirect()->route('dashboard.index')->with('success', 'Hydration history item removed.');

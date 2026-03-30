@@ -19,7 +19,7 @@ export default function Profile({ pageMeta, profile, flash }) {
     };
 
     return (
-        <AppShell pageMeta={pageMeta} topBarTitle="Profile & Goals">
+        <AppShell pageMeta={pageMeta} brandMode>
             <FlashBanner message={flash?.success} />
 
             <PageTransition>
@@ -54,7 +54,7 @@ export default function Profile({ pageMeta, profile, flash }) {
                     <span>Carb Goal</span>
                     <strong>{profile.macroTargets.carbs}</strong>
                 </article>
-                <article className="editorial-card compact-stat">
+                <article className="editorial-card compact-stat compact-stat--wide">
                     <div className="compact-stat__icon"><Icon name="opacity" filled /></div>
                     <span>Fat Goal</span>
                     <strong>{profile.macroTargets.fat}</strong>

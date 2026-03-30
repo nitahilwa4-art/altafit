@@ -10,9 +10,9 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
-        $user = User::query()->firstOrFail();
+        $user = $request->user();
         $weightDelta = round((float) $user->current_weight - (float) $user->goal_weight, 1);
 
         return Inertia::render('Profile', [
@@ -72,18 +72,30 @@ class ProfileController extends Controller
             'reminders_enabled' => ['nullable', 'boolean'],
         ]);
 
-        $user = User::query()->firstOrFail();
+        /** @var User $user */
+        $user = $request->user();
+        
+        $oldWeight = $user->current_weight;
+        
         $user->update([
             ...$validated,
             'reminders_enabled' => (bool) ($validated['reminders_enabled'] ?? false),
         ]);
 
+        if (abs((float)$oldWeight - (float)$validated['current_weight']) > 0.01) {
+            $user->weightLogs()->updateOrCreate(
+                ['logged_date' => now()->toDateString()],
+                ['weight_kg' => $validated['current_weight']]
+            );
+        }
+
         return redirect()->route('profile.index')->with('success', 'Profile goals updated.');
     }
 
-    public function toggleTheme(): RedirectResponse
+    public function toggleTheme(Request $request): RedirectResponse
     {
-        $user = User::query()->firstOrFail();
+        /** @var User $user */
+        $user = $request->user();
         $user->update([
             'theme' => $user->theme === 'dark' ? 'light' : 'dark',
         ]);
