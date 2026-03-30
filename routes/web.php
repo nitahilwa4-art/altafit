@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlansController;
@@ -14,6 +15,8 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
@@ -28,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat/log', [ChatController::class, 'store'])->name('chat.store');
     Route::patch('/chat/log/{meal}', [ChatController::class, 'update'])->name('chat.update');
     Route::delete('/chat/log/{meal}', [ChatController::class, 'destroy'])->name('chat.destroy');
+    Route::get('/chat/export', [ChatController::class, 'export'])->name('chat.export');
 
     Route::get('/plans', PlansController::class)->name('plans.index');
     Route::post('/plans', [PlansController::class, 'store'])->name('plans.store');

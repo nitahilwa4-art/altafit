@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\NutritionEstimator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response as FacadeResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -113,6 +114,7 @@ class ChatController extends Controller
 
     public function update(Request $request, Meal $meal): RedirectResponse
     {
+        abort_if($meal->user_id !== $request->user()->id, 403);
         $validated = $request->validate([
             'description' => ['required', 'string', 'max:255'],
             'meal_type' => ['nullable', 'string', 'max:50'],
@@ -137,6 +139,49 @@ class ChatController extends Controller
         $meal->delete();
 
         return redirect()->route('chat.index')->with('success', 'Meal log removed.');
+    }
+
+    public function export(Request $request)
+    {
+        $user = $request->user();
+
+        $meals = $user->meals()
+            ->orderBy('logged_at', 'desc')
+            ->get([
+                'logged_at',
+                'meal_type',
+                'description',
+                'calories',
+                'protein_g',
+                'carbs_g',
+                'fat_g',
+                'fiber_g',
+                'notes',
+            ]);
+
+        $headers = ['Date', 'Time', 'Type', 'Description', 'Calories (kcal)', 'Protein (g)', 'Carbs (g)', 'Fat (g)', 'Fiber (g)', 'Notes'];
+        $rows = $meals->map(fn ($meal) => [
+            optional($meal->logged_at)->format('Y-m-d') ?? '',
+            optional($meal->logged_at)->format('H:i') ?? '',
+            $meal->meal_type ?? '',
+            $meal->description ?? '',
+            $meal->calories ?? 0,
+            $meal->protein_g ?? 0,
+            $meal->carbs_g ?? 0,
+            $meal->fat_g ?? 0,
+            $meal->fiber_g ?? 0,
+            $meal->notes ?? '',
+        ])->toArray();
+
+        $csv = array_map(fn ($row) => '"'.implode('","', array_map(fn ($v) => str_replace('"', '""', $v), $row)).'"', $rows);
+        array_unshift($csv, '"'.implode('","', $headers).'"');
+
+        $filename = 'altafit-meals-'.now()->format('Y-m-d').'.csv';
+
+        return FacadeResponse::make(implode("\n", $csv), 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     protected function guessMealType(): string

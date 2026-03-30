@@ -17,6 +17,64 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
     const createPlanForm = useForm(newPlanForm);
     const [deleteTarget, setDeleteTarget] = useState(null);
 
+    // Smart form: auto-calculate Remaining ↔ Progress from Goal Target
+    const applyGoalTargetToCreate = (target) => {
+        const t = parseFloat(target) || 0;
+        const pct = parseFloat(createPlanForm.data.progress_percent) || 0;
+        createPlanForm.setData('goal_target', target);
+        if (t > 0 && pct >= 0) {
+            createPlanForm.setData('goal_remaining', String(Math.max(0, t * (1 - pct / 100)).toFixed(2)));
+        }
+    };
+
+    const applyProgressToCreate = (pct) => {
+        const t = parseFloat(createPlanForm.data.goal_target) || 0;
+        const p = Math.min(100, Math.max(0, parseFloat(pct) || 0));
+        createPlanForm.setData('progress_percent', pct);
+        if (t > 0) {
+            createPlanForm.setData('goal_remaining', String(Math.max(0, t * (1 - p / 100)).toFixed(2)));
+        }
+    };
+
+    const applyRemainingToCreate = (remaining) => {
+        const t = parseFloat(createPlanForm.data.goal_target) || 0;
+        const r = parseFloat(remaining) || 0;
+        createPlanForm.setData('goal_remaining', remaining);
+        if (t > 0) {
+            const p = Math.min(100, Math.max(0, 100 - (r / t) * 100));
+            createPlanForm.setData('progress_percent', String(Math.round(p)));
+        }
+    };
+
+    // Smart form for Edit Active Plan (prefilled)
+    const applyGoalTargetToEdit = (target) => {
+        const t = parseFloat(target) || 0;
+        const pct = parseFloat(form.data.progress_percent) || 0;
+        form.setData('goal_target', target);
+        if (t > 0 && pct >= 0) {
+            form.setData('goal_remaining', String(Math.max(0, t * (1 - pct / 100)).toFixed(2)));
+        }
+    };
+
+    const applyProgressToEdit = (pct) => {
+        const t = parseFloat(form.data.goal_target) || 0;
+        const p = Math.min(100, Math.max(0, parseFloat(pct) || 0));
+        form.setData('progress_percent', pct);
+        if (t > 0) {
+            form.setData('goal_remaining', String(Math.max(0, t * (1 - p / 100)).toFixed(2)));
+        }
+    };
+
+    const applyRemainingToEdit = (remaining) => {
+        const t = parseFloat(form.data.goal_target) || 0;
+        const r = parseFloat(remaining) || 0;
+        form.setData('goal_remaining', remaining);
+        if (t > 0) {
+            const p = Math.min(100, Math.max(0, 100 - (r / t) * 100));
+            form.setData('progress_percent', String(Math.round(p)));
+        }
+    };
+
     const submit = (event) => {
         event.preventDefault();
         form.patch(`/plans/${plan.id}`, { preserveScroll: true });
@@ -173,11 +231,11 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                         <FieldError message={createPlanForm.errors.subtitle} />
                         <label><span>Goal Unit</span><input value={createPlanForm.data.goal_unit} onChange={(event) => createPlanForm.setData('goal_unit', event.target.value)} /></label>
                         <FieldError message={createPlanForm.errors.goal_unit} />
-                        <label><span>Goal Target</span><input type="number" step="0.1" value={createPlanForm.data.goal_target} onChange={(event) => createPlanForm.setData('goal_target', event.target.value)} /></label>
+                        <label><span>Goal Target</span><input type="number" step="0.1" value={createPlanForm.data.goal_target} onChange={(event) => applyGoalTargetToCreate(event.target.value)} /></label>
                         <FieldError message={createPlanForm.errors.goal_target} />
-                        <label><span>Remaining</span><input type="number" step="0.1" value={createPlanForm.data.goal_remaining} onChange={(event) => createPlanForm.setData('goal_remaining', event.target.value)} /></label>
+                        <label><span>Remaining</span><input type="number" step="0.1" value={createPlanForm.data.goal_remaining} onChange={(event) => applyRemainingToCreate(event.target.value)} /></label>
                         <FieldError message={createPlanForm.errors.goal_remaining} />
-                        <label><span>Progress</span><input type="number" min="0" max="100" value={createPlanForm.data.progress_percent} onChange={(event) => createPlanForm.setData('progress_percent', event.target.value)} /></label>
+                        <label><span>Progress (%)</span><input type="number" min="0" max="100" value={createPlanForm.data.progress_percent} onChange={(event) => applyProgressToCreate(event.target.value)} /></label>
                         <FieldError message={createPlanForm.errors.progress_percent} />
                         <label><span>Tip</span><input value={createPlanForm.data.tip} onChange={(event) => createPlanForm.setData('tip', event.target.value)} /></label>
                         <FieldError message={createPlanForm.errors.tip} />
@@ -195,11 +253,11 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                         <FieldError message={form.errors.title} />
                         <label><span>Subtitle</span><input value={form.data.subtitle} onChange={(event) => form.setData('subtitle', event.target.value)} /></label>
                         <FieldError message={form.errors.subtitle} />
-                        <label><span>Goal Target ({plan.goalUnit})</span><input type="number" step="0.1" value={form.data.goal_target} onChange={(event) => form.setData('goal_target', event.target.value)} /></label>
+                        <label><span>Goal Target ({plan.goalUnit})</span><input type="number" step="0.1" value={form.data.goal_target} onChange={(event) => applyGoalTargetToEdit(event.target.value)} /></label>
                         <FieldError message={form.errors.goal_target} />
-                        <label><span>Remaining ({plan.goalUnit})</span><input type="number" step="0.1" value={form.data.goal_remaining} onChange={(event) => form.setData('goal_remaining', event.target.value)} /></label>
+                        <label><span>Remaining ({plan.goalUnit})</span><input type="number" step="0.1" value={form.data.goal_remaining} onChange={(event) => applyRemainingToEdit(event.target.value)} /></label>
                         <FieldError message={form.errors.goal_remaining} />
-                        <label><span>Progress</span><input type="number" min="0" max="100" value={form.data.progress_percent} onChange={(event) => form.setData('progress_percent', event.target.value)} /></label>
+                        <label><span>Progress (%)</span><input type="number" min="0" max="100" value={form.data.progress_percent} onChange={(event) => applyProgressToEdit(event.target.value)} /></label>
                         <FieldError message={form.errors.progress_percent} />
                         <label><span>Tip</span><input value={form.data.tip} onChange={(event) => form.setData('tip', event.target.value)} /></label>
                         <FieldError message={form.errors.tip} />

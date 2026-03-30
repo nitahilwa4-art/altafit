@@ -16,3 +16,12 @@ createInertiaApp({
         showSpinner: false,
     },
 });
+
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            // SW registration failed — app functions normally without it
+        });
+    });
+}

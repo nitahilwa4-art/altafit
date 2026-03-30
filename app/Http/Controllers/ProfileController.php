@@ -37,8 +37,8 @@ class ProfileController extends Controller
                 'goalDelta' => ($weightDelta > 0 ? '-' : '+').number_format(abs($weightDelta), 1).' kg to target',
                 'settings' => [
                     ['title' => 'Smart Reminders', 'description' => 'Meal and water alerts', 'type' => 'toggle', 'value' => $user->reminders_enabled],
-                    ['title' => 'Apple Health Sync', 'description' => 'Last synced 2m ago', 'type' => 'link'],
-                    ['title' => 'Units & Measurements', 'description' => 'Metric (kg, ml)', 'type' => 'link'],
+                    ['title' => 'Apple Health Sync', 'description' => 'Coming soon — integration planned', 'type' => 'info'],
+                    ['title' => 'Units & Measurements', 'description' => 'Metric (kg, ml) · default', 'type' => 'info'],
                 ],
                 'form' => [
                     'name' => $user->name,

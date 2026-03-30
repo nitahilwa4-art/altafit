@@ -86,7 +86,7 @@ export default function Profile({ pageMeta, profile, flash }) {
                                 : 'straighten';
 
                         return (
-                            <div key={setting.title} className="settings-list__item">
+                            <div key={setting.title} className={`settings-list__item ${setting.type === 'info' ? 'settings-list__item--static' : ''}`}>
                                 <div className="settings-list__main">
                                     <div className="settings-list__icon"><Icon name={iconName} filled={setting.type === 'toggle'} /></div>
                                     <div>
@@ -96,10 +96,23 @@ export default function Profile({ pageMeta, profile, flash }) {
                                 </div>
                                 {setting.type === 'toggle'
                                     ? <button type="button" className={`toggle ${form.data.reminders_enabled ? 'is-on' : ''}`.trim()} onClick={() => form.setData('reminders_enabled', !form.data.reminders_enabled)} />
+                                    : setting.type === 'info' ? null
                                     : <span className="settings-list__arrow"><Icon name="chevron_right" /></span>}
                             </div>
                         );
                     })}
+                    <div className="settings-list__item settings-list__item--danger">
+                        <div className="settings-list__main">
+                            <div className="settings-list__icon"><Icon name="logout" filled /></div>
+                            <div>
+                                <h3>Logout</h3>
+                                <p>Sign out of your account</p>
+                            </div>
+                        </div>
+                        <button type="button" className="settings-list__arrow" onClick={() => router.post('/logout')}>
+                            <Icon name="chevron_right" />
+                        </button>
+                    </div>
                 </article>
             </section>
 

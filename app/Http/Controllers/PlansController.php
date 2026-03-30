@@ -124,6 +124,7 @@ class PlansController extends Controller
 
     public function update(Request $request, Plan $plan): RedirectResponse
     {
+        abort_if($plan->user_id !== $request->user()->id, 403);
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
@@ -138,8 +139,9 @@ class PlansController extends Controller
         return redirect()->route('plans.index')->with('success', 'Active plan updated.');
     }
 
-    public function activate(Plan $plan): RedirectResponse
+    public function activate(Request $request, Plan $plan): RedirectResponse
     {
+        abort_if($plan->user_id !== $request->user()->id, 403);
         Plan::query()->where('user_id', $plan->user_id)->update(['is_active' => false]);
         $plan->update(['is_active' => true]);
 
@@ -148,6 +150,7 @@ class PlansController extends Controller
 
     public function storeMilestone(Request $request, Plan $plan): RedirectResponse
     {
+        abort_if($plan->user_id !== $request->user()->id, 403);
         $validated = $request->validate([
             'label' => ['required', 'string', 'max:100'],
         ]);
@@ -163,8 +166,9 @@ class PlansController extends Controller
         return redirect()->route('plans.index')->with('success', 'Milestone added.');
     }
 
-    public function toggleMilestone(Milestone $milestone): RedirectResponse
+    public function toggleMilestone(Request $request, Milestone $milestone): RedirectResponse
     {
+        abort_if($milestone->plan->user_id !== $request->user()->id, 403);
         $milestone->update([
             'is_completed' => ! $milestone->is_completed,
         ]);
@@ -172,15 +176,17 @@ class PlansController extends Controller
         return redirect()->route('plans.index')->with('success', 'Milestone status updated.');
     }
 
-    public function destroyMilestone(Milestone $milestone): RedirectResponse
+    public function destroyMilestone(Request $request, Milestone $milestone): RedirectResponse
     {
+        abort_if($milestone->plan->user_id !== $request->user()->id, 403);
         $milestone->delete();
 
         return redirect()->route('plans.index')->with('success', 'Milestone removed.');
     }
 
-    public function destroy(Plan $plan): RedirectResponse
+    public function destroy(Request $request, Plan $plan): RedirectResponse
     {
+        abort_if($plan->user_id !== $request->user()->id, 403);
         $wasActive = $plan->is_active;
         $userId = $plan->user_id;
 

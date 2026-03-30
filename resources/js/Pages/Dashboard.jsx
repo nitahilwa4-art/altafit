@@ -14,6 +14,19 @@ function chartPath(data) {
     return data.map((d, index) => `${index === 0 ? 'M' : 'L'} ${(index / (data.length - 1)) * 100},${d.y}`).join(' ');
 }
 
+function sparklinePath(weights) {
+    if (!weights || weights.length < 2) return '';
+    const vals = weights.map((w) => w.weight_kg);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    return weights.map((w, i) => {
+        const x = (i / (weights.length - 1)) * 100;
+        const y = 90 - (((w.weight_kg - min) / range) * 80);
+        return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+    }).join(' ');
+}
+
 export default function Dashboard({ pageMeta, summary, chart, hydrationPresets = [], hydrationHistory = [], flash }) {
     const path = chartPath(chart.data || []);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -72,12 +85,22 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                         <h2>Weekly Progress</h2>
                         <span>{summary.weeklyChange}</span>
                     </div>
-                    <article className="dashboard-progress-card">
-                        <div>
+                    <article className="dashboard-progress-card dashboard-sparkline" data-trend={summary.weightTrendDir}>
+                        <div className="dashboard-sparkline__label">
                             <small>Current Weight</small>
                             <strong>{summary.weeklyWeight}</strong>
                         </div>
-                        <Icon name={summary.weightTrendDir ?? 'trending_flat'} className="dashboard-progress-card__icon" />
+                        <svg className="dashboard-sparkline__svg" viewBox="0 0 100 50" preserveAspectRatio="none">
+                            <polyline
+                                points={sparklinePath(summary.weightHistory)}
+                                className="dashboard-sparkline__line"
+                                fill="none"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        <Icon name={summary.weightTrendDir ?? 'trending_flat'} className="dashboard-sparkline__icon" />
                     </article>
                     <article className="dashboard-insight-card editorial-card">
                         <div>
@@ -166,11 +189,15 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                 <section className="dashboard-hydration-wrap">
                     <article className="dashboard-hydration-card">
                         <div className="dashboard-hydration-card__left">
-                            <div className="dashboard-hydration-card__badge"><Icon name="water_drop" filled /></div>
+                            <ProgressRing value={summary.hydrationPercent} size={72} stroke={7} className="dashboard-hydration-card__ring">
+                                <div className="dashboard-hydration-card__ring-inner">
+                                    <strong><AnimatedNumber value={summary.hydrationCurrent} /></strong>
+                                    <small>L</small>
+                                </div>
+                            </ProgressRing>
                             <div>
                                 <h3>Hydration</h3>
-                                <p>{summary.hydrationCurrent}L of {summary.hydrationTarget}L</p>
-                                <ProgressBar value={summary.hydrationPercent} tone="tertiary" className="dashboard-macro-card__bar" />
+                                <p>of {summary.hydrationTarget}L target</p>
                             </div>
                         </div>
                         <div className="dashboard-hydration-card__actions">

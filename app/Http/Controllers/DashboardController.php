@@ -153,6 +153,10 @@ class DashboardController extends Controller
                 'hydrationPercent' => $user->hydration_goal_ml > 0 ? min((int) round(($hydrationCurrentMl / $user->hydration_goal_ml) * 100), 100) : 0,
                 'weeklyWeight' => number_format((float) $user->current_weight, 1).' kg',
                 'weightTrendDir' => $weightTrendDir,
+                'weightHistory' => $weightLogs->map(fn ($log) => [
+                    'date' => $log->logged_date,
+                    'weight_kg' => (float) $log->weight_kg,
+                ])->values(),
                 'weeklyChange' => $weeklyChange,
                 'averageCalories' => $averageCalories,
                 'todayMealsCount' => $todayMeals->count(),

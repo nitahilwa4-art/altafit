@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from '../Layouts/AppShell';
 import ConfirmDialog from '../Components/ui/ConfirmDialog';
 import FlashBanner from '../Components/ui/FlashBanner';
@@ -29,6 +29,8 @@ export default function Chat({ pageMeta, chat, flash }) {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('');
+    const [photoDialog, setPhotoDialog] = useState(null); // { name, preview, type }
+    const fileInputRef = useRef(null);
 
     const filteredMeals = useMemo(() => {
         let meals = chat.recentMeals ?? [];
@@ -72,6 +74,31 @@ export default function Chat({ pageMeta, chat, flash }) {
         if (deleteTarget) {
             router.delete(`/chat/log/${deleteTarget.id}`, { preserveScroll: true });
             setDeleteTarget(null);
+        }
+    };
+
+    const handlePhotoButton = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const isImage = file.type.startsWith('image/');
+        const preview = isImage ? URL.createObjectURL(file) : null;
+        setPhotoDialog({
+            name: file.name,
+            preview,
+            type: isImage ? 'image' : 'file',
+            size: (file.size / 1024).toFixed(1) + ' KB',
+        });
+        event.target.value = '';
+    };
+
+    const confirmPhoto = () => {
+        if (photoDialog) {
+            form.setData('message', `Photo: ${photoDialog.name} — OCR analysis pending backend integration.`);
+            setPhotoDialog(null);
         }
     };
 
@@ -161,7 +188,12 @@ export default function Chat({ pageMeta, chat, flash }) {
                 <section className="recent-meals-card editorial-card">
                     <div className="recent-meals-card__header">
                         <h3>Recent Logs</h3>
-                        <span>{chat.recentMeals?.length ?? 0} items</span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span>{chat.recentMeals?.length ?? 0} items</span>
+                            <button type="button" className="chat-export-btn" title="Export CSV" onClick={() => window.location.href = '/chat/export'}>
+                                <Icon name="download" />
+                            </button>
+                        </div>
                     </div>
                     <div className="recent-meals-card__filters">
                         <input
@@ -243,7 +275,7 @@ export default function Chat({ pageMeta, chat, flash }) {
                         <button type="button" className="chat-stitch__composer-icon"><Icon name="add_circle" /></button>
                         <input type="text" placeholder="Tell me what you ate..." value={form.data.message} onChange={(event) => form.setData('message', event.target.value)} />
                         <div className="chat-stitch__composer-actions">
-                            <button type="button" className="chat-stitch__composer-icon"><Icon name="photo_camera" /></button>
+                            <button type="button" className="chat-stitch__composer-icon" onClick={handlePhotoButton} title="Attach photo"><Icon name="photo_camera" /></button>
                             <button type="submit" className="chat-stitch__composer-send" disabled={form.processing || !form.data.message.trim()}>{form.processing ? <span className="button-spinner" /> : <Icon name="arrow_upward" />}</button>
                         </div>
                     </div>
@@ -257,6 +289,44 @@ export default function Chat({ pageMeta, chat, flash }) {
                     <FieldError message={form.errors.meal_type || form.errors.notes} />
                 </form>
             </div>
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+            />
+
+            {photoDialog && (
+                <div className="chat-stitch__photo-dialog">
+                    <div className="chat-stitch__photo-dialog__backdrop" onClick={() => setPhotoDialog(null)} />
+                    <div className="chat-stitch__photo-dialog__card editorial-card">
+                        <div className="recent-meals-card__header">
+                            <h3>Photo Selected</h3>
+                            <span className={`chat-stitch__photo-dialog__badge chat-stitch__photo-dialog__badge--${photoDialog.type}`}>
+                                {photoDialog.type === 'image' ? 'Image' : 'File'}
+                            </span>
+                        </div>
+                        {photoDialog.preview ? (
+                            <img src={photoDialog.preview} alt="Preview" className="chat-stitch__photo-dialog__preview" />
+                        ) : (
+                            <div className="chat-stitch__photo-dialog__file-preview">
+                                <Icon name="attach_file" />
+                                <strong>{photoDialog.name}</strong>
+                                <small>{photoDialog.size}</small>
+                            </div>
+                        )}
+                        <p className="chat-stitch__photo-dialog__note">
+                            OCR analysis will be available once the vision backend is connected.
+                        </p>
+                        <div className="chat-stitch__photo-dialog__actions">
+                            <button type="button" className="ghost-cta" onClick={() => setPhotoDialog(null)}>Cancel</button>
+                            <button type="button" className="primary-cta" onClick={confirmPhoto}>Log from Photo</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <ConfirmDialog
                 open={deleteTarget !== null}
