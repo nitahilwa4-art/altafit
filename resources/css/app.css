@@ -422,6 +422,12 @@ html.dark .topbar {
 html.dark .editorial-card {
     border-color: rgba(255, 255, 255, 0.04);
 }
+.editorial-card--slim {
+    padding: 14px 16px;
+    border-color: rgba(109, 254, 156, 0.25);
+    background: linear-gradient(135deg, rgba(109, 254, 156, 0.08), var(--surface-card));
+    animation: scaleIn 0.2s ease;
+}
 .recent-meals-card__filters {
     display: flex;
     gap: 8px;
@@ -755,6 +761,63 @@ button:disabled {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+}
+.dashboard-milestones-card {
+    padding: 18px;
+    display: grid;
+    gap: 10px;
+}
+.dashboard-milestones-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.dashboard-milestones-card__head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+.dashboard-milestones-card__head span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(109, 254, 156, 0.2);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+.dashboard-milestones-list {
+    display: grid;
+    gap: 6px;
+}
+.dashboard-milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.7);
+    transition: opacity 0.15s;
+}
+.dashboard-milestone-item.is-done {
+    opacity: 0.55;
+}
+.dashboard-milestone-item.is-done .dashboard-milestone-item__label {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+.dashboard-milestone-item__check {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+.dashboard-milestone-item.is-done .dashboard-milestone-item__check {
+    color: var(--primary);
+}
+.dashboard-milestone-item__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 .dashboard-insight-card small,
 .dashboard-hydration-card small {
@@ -1418,7 +1481,7 @@ html.dark .chat-stitch__analysis-grid article {
     font-weight: 800;
     color: #005f2e;
 }
-.plans-stitch__section-head button { background: transparent; }
+.plans-stitch__section-head button:not(.plans-add-btn):not(.plans-ai-btn) { background: transparent; }
 .plans-stitch__carousel {
     display: grid;
     grid-auto-flow: column;
@@ -1556,15 +1619,19 @@ html.dark .chat-stitch__analysis-grid article {
 .plans-hero__title-row h2 { margin: 0; font-size: 22px; letter-spacing: -0.04em; font-weight: 900; }
 .plans-hero__title-row p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .plans-hero__edit-btn {
-    width: 36px;
-    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
     border-radius: 999px;
     background: rgba(109, 254, 156, 0.2);
     color: var(--primary);
-    display: grid;
-    place-items: center;
-    border: none;
+    border: 1.5px solid rgba(109, 254, 156, 0.3);
     cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     transition: background 0.15s ease;
     flex-shrink: 0;
 }
@@ -1955,17 +2022,34 @@ html.dark .chat-stitch__analysis-grid article {
     display: grid;
     gap: 14px;
 }
-.plans-milestone-form {
-    padding: 18px 20px;
-}
-.plans-milestone-form__row {
+.plans-milestones-section .empty-state-card { animation: fadeInUp 0.2s ease; }
+.plans-add-milestone-row {
     display: flex;
     gap: 10px;
     align-items: center;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(109, 254, 156, 0.12), var(--surface-card));
+    border: 1.5px solid rgba(109, 254, 156, 0.4);
+    border-radius: var(--radius-card);
+    animation: scaleIn 0.2s ease;
 }
-.plans-milestone-form__row input {
+.plans-add-milestone-input {
     flex: 1;
+    padding: 9px 14px;
+    border: 1.5px solid rgba(109, 254, 156, 0.3);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
 }
+.plans-add-milestone-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(109, 254, 156, 0.15);
+}
+.plans-add-milestone-input::placeholder { color: var(--text-muted); }
+.plans-milestones-timeline { margin-top: 4px; }
 
 .profile-header {
     display: grid;

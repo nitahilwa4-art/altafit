@@ -19,6 +19,7 @@ class DashboardController extends Controller
         $user = $request->user()->load([
             'meals' => fn ($query) => $query->latest('logged_at'),
             'waterLogs' => fn ($query) => $query->latest('logged_at'),
+            'plans' => fn ($query) => $query->with('milestones')->where('is_active', true)->limit(1),
         ]);
 
         $today = Carbon::now()->toDateString();
@@ -163,6 +164,11 @@ class DashboardController extends Controller
                 'coachingTip' => $coachingTip,
                 'currentStreak' => $user->current_streak,
                 'longestStreak' => $user->longest_streak,
+                'milestones' => $user->plans->first()?->milestones->map(fn ($m) => [
+                    'id' => $m->id,
+                    'label' => $m->label,
+                    'is_completed' => $m->is_completed,
+                ])->values() ?? [],
             ],
             'chart' => [
                 'data' => $chartData->all(),

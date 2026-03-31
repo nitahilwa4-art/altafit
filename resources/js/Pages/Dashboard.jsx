@@ -123,6 +123,28 @@ export default function Dashboard({ pageMeta, summary, chart, hydrationPresets =
                             </div>
                         </div>
                     </article>
+
+                    {summary.milestones && summary.milestones.length > 0 && (
+                        <article className="dashboard-milestones-card editorial-card">
+                            <div className="dashboard-milestones-card__head">
+                                <h3>Milestone Plan</h3>
+                                <span>{summary.milestones.filter(m => m.is_completed).length} / {summary.milestones.length} selesai</span>
+                            </div>
+                            <div className="dashboard-milestones-list">
+                                {summary.milestones.map((m) => (
+                                    <div key={m.id} className={`dashboard-milestone-item ${m.is_completed ? 'is-done' : ''}`}>
+                                        <div className="dashboard-milestone-item__check">
+                                            <Icon name={m.is_completed ? 'check_circle' : 'radio_button_unchecked'} filled={m.is_completed} />
+                                        </div>
+                                        <span className="dashboard-milestone-item__label">{m.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button type="button" className="text-button" onClick={() => router.visit('/plans')} style={{ marginTop: '8px', fontSize: '12px' }}>
+                                Lihat di Plans &rarr;
+                            </button>
+                        </article>
+                    )}
                 </section>
 
                 <section className="dashboard-chart-card">
