@@ -20,6 +20,7 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
     const [showPlanForm, setShowPlanForm] = useState(false);
     const [planFormMode, setPlanFormMode] = useState('new'); // 'new' | 'edit'
     const [expandedSection, setExpandedSection] = useState(null);
+    const [milestones, setMilestones] = useState(plan.milestones);
 
     const dailyScoreValue = plan.dailyScore;
     const calorieRingValue = plan.todayMacros?.calorieTarget > 0
@@ -61,14 +62,35 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
     };
 
     const submitMilestone = () => {
-        milestoneForm.post(`/plans/${plan.id}/milestones`, { preserveScroll: true, onSuccess: () => { milestoneForm.reset(); setExpandedSection(null); }});
+        const label = milestoneForm.data.label.trim();
+        if (!label) return;
+        const originalLabel = milestoneForm.data.label;
+        milestoneForm.setData('label', '');
+        fetch(`/plans/${plan.id}/milestones`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
+            body: JSON.stringify({ label }),
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                setMilestones(prev => [...prev, data.milestone]);
+                setExpandedSection(null);
+            }
+        }).catch(() => {
+            milestoneForm.setData('label', originalLabel);
+        });
     };
 
     const confirmDelete = () => {
         if (deleteTarget?.type === 'plan') {
             router.delete(`/plans/${deleteTarget.id}`, { preserveScroll: true });
         } else if (deleteTarget?.type === 'milestone') {
-            router.delete(`/plans/milestones/${deleteTarget.id}`, { preserveScroll: true });
+            const id = deleteTarget.id;
+            fetch(`/plans/milestones/${id}`, {
+                method: 'DELETE',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
+            }).then(() => {
+                setMilestones(prev => prev.filter(m => m.id !== id));
+            });
         }
         setDeleteTarget(null);
     };
@@ -262,19 +284,22 @@ export default function Plans({ pageMeta, plansList = [], plan, newPlanForm, fla
                         </div>
                     )}
 
-                    {plan.milestones.length ? (
+                    {milestones.length ? (
                         <div className="plans-milestones-timeline">
-                            {plan.milestones.map((item, i) => (
+                            {milestones.map((item, i) => (
                                 <div key={item.id} className={`plans-milestone-item ${item.done ? 'is-done' : ''}`}>
                                     <div className="plans-milestone-item__connector">
                                         <div className={`plans-milestone-item__dot ${item.done ? 'is-done' : ''}`}>
                                             <Icon name={item.done ? 'check' : 'radio_button_unchecked'} filled={item.done} />
                                         </div>
-                                        {i < plan.milestones.length - 1 && <div className={`plans-milestone-item__line ${item.done ? 'is-done' : ''}`} />}
+                                        {i < milestones.length - 1 && <div className={`plans-milestone-item__line ${item.done ? 'is-done' : ''}`} />}
                                     </div>
                                     <div className="plans-milestone-item__body">
                                         <span className="plans-milestone-item__label">{item.day}</span>
-                                        <button type="button" className="plans-milestone-item__toggle text-button" onClick={() => router.patch(`/plans/milestones/${item.id}/toggle`, {}, { preserveScroll: true })}>
+                                        <button type="button" className="plans-milestone-item__toggle text-button" onClick={() => {
+                                            setMilestones(prev => prev.map(m => m.id === item.id ? { ...m, done: !m.done } : m));
+                                            fetch(`/plans/milestones/${item.id}/toggle`, { method: 'PATCH', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content } });
+                                        }}>
                                             {item.done ? 'Batal' : 'Selesai'}
                                         </button>
                                         <button type="button" className="text-button text-button--danger" onClick={() => setDeleteTarget({ type: 'milestone', id: item.id, title: item.day })}><Icon name="delete" /></button>
