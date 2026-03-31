@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/plans/{plan}/activate', [PlansController::class, 'activate'])->name('plans.activate');
     Route::delete('/plans/{plan}', [PlansController::class, 'destroy'])->name('plans.destroy');
     Route::post('/plans/{plan}/milestones', [PlansController::class, 'storeMilestone'])->name('plans.milestones.store');
+    Route::post('/plans/{plan}/milestones/generate', [PlansController::class, 'generateMilestones'])->name('plans.milestones.generate');
     Route::patch('/plans/milestones/{milestone}/toggle', [PlansController::class, 'toggleMilestone'])->name('plans.milestones.toggle');
     Route::delete('/plans/milestones/{milestone}', [PlansController::class, 'destroyMilestone'])->name('plans.milestones.destroy');
 
